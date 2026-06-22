@@ -1,15 +1,37 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="SpecMind.App"
-             xmlns:local="using:SpecMind"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
-    <Application.DataTemplates>
-        <local:ViewLocator/>
-    </Application.DataTemplates>
-  
+             RequestedThemeVariant="Dark">
+    
     <Application.Styles>
         <FluentTheme />
+        
+        <!-- Глобальный стиль: шрифт с поддержкой кириллицы для всего приложения -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI, Arial, sans-serif"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="Segoe UI, Arial, sans-serif"/>
+        </Style>
     </Application.Styles>
+    
+    <Application.Resources>
+        <!-- Фоны -->
+        <SolidColorBrush x:Key="SM.BackgroundPrimary" Color="#1A1B26"/>
+        <SolidColorBrush x:Key="SM.BackgroundSecondary" Color="#24253A"/>
+        <SolidColorBrush x:Key="SM.Border" Color="#2F3146"/>
+        
+        <!-- Акценты -->
+        <SolidColorBrush x:Key="SM.AccentPrimary" Color="#7AA9E0"/>
+        <SolidColorBrush x:Key="SM.AccentHover" Color="#9DBFE8"/>
+        
+        <!-- Текст -->
+        <SolidColorBrush x:Key="SM.TextHeading" Color="#E4E6F1"/>
+        <SolidColorBrush x:Key="SM.TextPrimary" Color="#A9B1D6"/>
+        
+        <!-- Индикаторы -->
+        <SolidColorBrush x:Key="SM.StatusGood" Color="#9ECE6A"/>
+        <SolidColorBrush x:Key="SM.StatusWarning" Color="#E0AF68"/>
+        <SolidColorBrush x:Key="SM.StatusCritical" Color="#F7768E"/>
+    </Application.Resources>
 </Application>

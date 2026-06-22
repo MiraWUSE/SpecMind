@@ -11,7 +11,11 @@ public class HardwareInfo
     public List<StorageInfo> Storages { get; set; } = new();
     public MotherboardInfo Motherboard { get; set; } = new();
 
+    // Для AI-анализа (заполнится позже)
     public int HealthScore { get; set; } = 0;
     public List<string> Bottlenecks { get; set; } = new();
     public List<string> Recommendations { get; set; } = new();
+
+    // Данные с датчиков (температуры, вентиляторы)
+    public SensorData Sensors { get; set; } = new();
 }
