@@ -3,11 +3,13 @@
         xmlns:vm="using:SpecMind.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="750"
         x:Class="SpecMind.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="SpecMind"
-        Width="1000" Height="700"
+        Width="1400" Height="750"
+        MinWidth="1100" MinHeight="650"
+        WindowStartupLocation="CenterScreen"
         Background="{StaticResource SM.BackgroundPrimary}"
         FontFamily="Segoe UI, Arial, sans-serif">
 
@@ -32,8 +34,8 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Карточки с информацией -->
-            <Grid Grid.Column="0">
+            <!-- ========== DASHBOARD ========== -->
+            <Grid Grid.Column="0" IsVisible="{Binding IsDashboardVisible}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -86,18 +88,11 @@
                         Padding="25"
                         Margin="0,0,0,20">
                     <Grid ColumnDefinitions="*,*">
-                        <!-- CPU -->
                         <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                            <TextBlock Text="Процессор" 
-                                       FontSize="16"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource SM.AccentPrimary}"
-                                       Margin="0,0,0,10"/>
-                            <TextBlock Text="{Binding HardwareInfo.Cpu.Name}" 
-                                       FontSize="14"
-                                       Foreground="{StaticResource SM.TextHeading}"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,5"/>
+                            <TextBlock Text="Процессор" FontSize="16" FontWeight="Bold"
+                                       Foreground="{StaticResource SM.AccentPrimary}" Margin="0,0,0,10"/>
+                            <TextBlock Text="{Binding HardwareInfo.Cpu.Name}" FontSize="14"
+                                       Foreground="{StaticResource SM.TextHeading}" TextWrapping="Wrap" Margin="0,0,0,5"/>
                             <TextBlock>
                                 <Run Text="Ядер: " Foreground="{StaticResource SM.TextPrimary}"/>
                                 <Run Text="{Binding HardwareInfo.Cpu.Cores}" Foreground="{StaticResource SM.TextHeading}"/>
@@ -108,45 +103,29 @@
                                 <Run Text="Частота: " Foreground="{StaticResource SM.TextPrimary}"/>
                                 <Run Text="{Binding HardwareInfo.Cpu.BaseClock}" Foreground="{StaticResource SM.TextHeading}"/>
                             </TextBlock>
-                            
-                            <!-- Температура и загрузка CPU -->
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Border Background="{StaticResource SM.StatusGood}" 
-                                        CornerRadius="4" 
-                                        Padding="8,4"
-                                        Margin="0,0,10,0">
+                                <Border Background="{StaticResource SM.StatusGood}" CornerRadius="4" Padding="8,4" Margin="0,0,10,0">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="🌡️ " FontSize="14"/>
+                                        <TextBlock Text="️ " FontSize="14"/>
                                         <TextBlock Text="{Binding HardwareInfo.Sensors.CpuTemperature, StringFormat='{}{0:F0}°C'}" 
-                                                   Foreground="White"
-                                                   FontWeight="Bold"/>
+                                                   Foreground="White" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Background="{StaticResource SM.AccentPrimary}" 
-                                        CornerRadius="4" 
-                                        Padding="8,4">
+                                <Border Background="{StaticResource SM.AccentPrimary}" CornerRadius="4" Padding="8,4">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="⚡ " FontSize="14"/>
                                         <TextBlock Text="{Binding HardwareInfo.Sensors.CpuUsage, StringFormat='{}{0:F0}%'}" 
-                                                   Foreground="White"
-                                                   FontWeight="Bold"/>
+                                                   Foreground="White" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- GPU -->
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="Видеокарта" 
-                                       FontSize="16"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource SM.AccentPrimary}"
-                                       Margin="0,0,0,10"/>
-                            <TextBlock Text="{Binding HardwareInfo.Gpu.Name}" 
-                                       FontSize="14"
-                                       Foreground="{StaticResource SM.TextHeading}"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,5"/>
+                            <TextBlock Text="Видеокарта" FontSize="16" FontWeight="Bold"
+                                       Foreground="{StaticResource SM.AccentPrimary}" Margin="0,0,0,10"/>
+                            <TextBlock Text="{Binding HardwareInfo.Gpu.Name}" FontSize="14"
+                                       Foreground="{StaticResource SM.TextHeading}" TextWrapping="Wrap" Margin="0,0,0,5"/>
                             <TextBlock>
                                 <Run Text="VRAM: " Foreground="{StaticResource SM.TextPrimary}"/>
                                 <Run Text="{Binding HardwareInfo.Gpu.Vram}" Foreground="{StaticResource SM.TextHeading}"/>
@@ -155,28 +134,19 @@
                                 <Run Text="Драйвер: " Foreground="{StaticResource SM.TextPrimary}"/>
                                 <Run Text="{Binding HardwareInfo.Gpu.DriverVersion}" Foreground="{StaticResource SM.TextHeading}"/>
                             </TextBlock>
-                            
-                            <!-- Температура и загрузка GPU -->
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Border Background="{StaticResource SM.StatusWarning}" 
-                                        CornerRadius="4" 
-                                        Padding="8,4"
-                                        Margin="0,0,10,0">
+                                <Border Background="{StaticResource SM.StatusWarning}" CornerRadius="4" Padding="8,4" Margin="0,0,10,0">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="🌡️ " FontSize="14"/>
                                         <TextBlock Text="{Binding HardwareInfo.Sensors.GpuTemperature, StringFormat='{}{0:F0}°C'}" 
-                                                   Foreground="White"
-                                                   FontWeight="Bold"/>
+                                                   Foreground="White" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
-                                <Border Background="{StaticResource SM.AccentPrimary}" 
-                                        CornerRadius="4" 
-                                        Padding="8,4">
+                                <Border Background="{StaticResource SM.AccentPrimary}" CornerRadius="4" Padding="8,4">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="⚡ " FontSize="14"/>
+                                        <TextBlock Text=" " FontSize="14"/>
                                         <TextBlock Text="{Binding HardwareInfo.Sensors.GpuUsage, StringFormat='{}{0:F0}%'}" 
-                                                   Foreground="White"
-                                                   FontWeight="Bold"/>
+                                                   Foreground="White" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -185,49 +155,35 @@
                 </Border>
 
                 <!-- Карточка RAM и Storage -->
-                <Border Grid.Row="2"
-                        Background="{StaticResource SM.BackgroundSecondary}"
-                        CornerRadius="12"
-                        Padding="25">
+                <Border Grid.Row="2" Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25">
                     <Grid ColumnDefinitions="*,*">
-                        <!-- RAM -->
-<StackPanel Grid.Column="0" Margin="0,0,20,0">
-    <TextBlock Text="Оперативная память" 
-               FontSize="16"
-               FontWeight="Bold"
-               Foreground="{StaticResource SM.AccentPrimary}"
-               Margin="0,0,0,10"/>
-    <TextBlock Text="{Binding HardwareInfo.Ram.ModuleName}" 
-               FontSize="14"
-               Foreground="{StaticResource SM.TextHeading}"
-               Margin="0,0,0,10"/>
-    <TextBlock>
-        <Run Text="Объем: " Foreground="{StaticResource SM.TextPrimary}"/>
-        <Run Text="{Binding HardwareInfo.Ram.TotalCapacity}" Foreground="{StaticResource SM.TextHeading}"/>
-    </TextBlock>
-    <TextBlock>
-        <Run Text="Тип: " Foreground="{StaticResource SM.TextPrimary}"/>
-        <Run Text="{Binding HardwareInfo.Ram.Type}" Foreground="{StaticResource SM.TextHeading}"/>
-    </TextBlock>
-    <TextBlock>
-        <Run Text="Частота: " Foreground="{StaticResource SM.TextPrimary}"/>
-        <Run Text="{Binding HardwareInfo.Ram.Speed}" Foreground="{StaticResource SM.TextHeading}"/>
-    </TextBlock>
-</StackPanel>
+                        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                            <TextBlock Text="Оперативная память" FontSize="16" FontWeight="Bold"
+                                       Foreground="{StaticResource SM.AccentPrimary}" Margin="0,0,0,10"/>
+                            <TextBlock Text="{Binding HardwareInfo.Ram.ModuleName}" FontSize="14"
+                                       Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,10"/>
+                            <TextBlock>
+                                <Run Text="Объем: " Foreground="{StaticResource SM.TextPrimary}"/>
+                                <Run Text="{Binding HardwareInfo.Ram.TotalCapacity}" Foreground="{StaticResource SM.TextHeading}"/>
+                            </TextBlock>
+                            <TextBlock>
+                                <Run Text="Тип: " Foreground="{StaticResource SM.TextPrimary}"/>
+                                <Run Text="{Binding HardwareInfo.Ram.Type}" Foreground="{StaticResource SM.TextHeading}"/>
+                            </TextBlock>
+                            <TextBlock>
+                                <Run Text="Частота: " Foreground="{StaticResource SM.TextPrimary}"/>
+                                <Run Text="{Binding HardwareInfo.Ram.Speed}" Foreground="{StaticResource SM.TextHeading}"/>
+                            </TextBlock>
+                        </StackPanel>
 
-                        <!-- Storage -->
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="Накопитель" 
-                                       FontSize="16"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource SM.AccentPrimary}"
-                                       Margin="0,0,0,10"/>
+                            <TextBlock Text="Накопитель" FontSize="16" FontWeight="Bold"
+                                       Foreground="{StaticResource SM.AccentPrimary}" Margin="0,0,0,10"/>
                             <ItemsControl ItemsSource="{Binding HardwareInfo.Storages}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Margin="0,0,0,8">
-                                            <TextBlock Text="{Binding Name}" 
-                                                       Foreground="{StaticResource SM.TextHeading}"/>
+                                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource SM.TextHeading}"/>
                                             <TextBlock>
                                                 <Run Text="{Binding Type}" Foreground="{StaticResource SM.TextPrimary}"/>
                                                 <Run Text=" | "/>
@@ -235,8 +191,7 @@
                                             </TextBlock>
                                             <TextBlock>
                                                 <Run Text="Статус: " Foreground="{StaticResource SM.TextPrimary}"/>
-                                                <Run Text="{Binding HealthStatus}" 
-                                                     Foreground="{StaticResource SM.StatusGood}"/>
+                                                <Run Text="{Binding HealthStatus}" Foreground="{StaticResource SM.StatusGood}"/>
                                             </TextBlock>
                                         </StackPanel>
                                     </DataTemplate>
@@ -247,10 +202,383 @@
                 </Border>
             </Grid>
 
-            <!-- Боковая панель с кнопками -->
-            <StackPanel Grid.Column="1" 
-                        Spacing="15"
-                        Margin="20,0,0,0">
+            <!-- ========== DETAILED ========== -->
+            <Grid Grid.Column="0" IsVisible="{Binding IsDetailedVisible}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Button Grid.Row="0" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0"
+                        Padding="10,5" Margin="0,0,0,20" Command="{Binding ShowDashboardCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Text="←" FontSize="20" Foreground="{StaticResource SM.AccentPrimary}"/>
+                        <TextBlock Text="Назад" FontSize="16" Foreground="{StaticResource SM.AccentPrimary}"/>
+                    </StackPanel>
+                </Button>
+
+                <TabControl Grid.Row="1" TabStripPlacement="Top" Background="Transparent">
+                    <TabItem Header="Процессор">
+                        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25" Margin="10">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding HardwareInfo.Cpu.Name}" FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource SM.AccentPrimary}"/>
+                                <Grid ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="8">
+                                        <TextBlock><Run Text="Ядер: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Cpu.Cores}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Потоков: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Cpu.Threads}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Базовая частота: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Cpu.BaseClock}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock><Run Text="Температура: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Sensors.CpuTemperature, StringFormat='{}{0:F1}°C'}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Загрузка: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Sensors.CpuUsage, StringFormat='{}{0:F1}%'}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <TabItem Header="Видеокарта">
+                        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25" Margin="10">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding HardwareInfo.Gpu.Name}" FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource SM.AccentPrimary}"/>
+                                <Grid ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="8">
+                                        <TextBlock><Run Text="VRAM: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Gpu.Vram}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Драйвер: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Gpu.DriverVersion}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock><Run Text="Температура: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Sensors.GpuTemperature, StringFormat='{}{0:F1}°C'}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Загрузка: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Sensors.GpuUsage, StringFormat='{}{0:F1}%'}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Вентилятор GPU: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Sensors.GpuFanSpeed}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/><Run Text=" RPM" Foreground="{StaticResource SM.TextPrimary}"/></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <TabItem Header="Оперативная память">
+                        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25" Margin="10">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{Binding HardwareInfo.Ram.ModuleName}" FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource SM.AccentPrimary}"/>
+                                <Grid ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="8">
+                                        <TextBlock><Run Text="Объем: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Ram.TotalCapacity}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Тип: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Ram.Type}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock><Run Text="Частота: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Ram.Speed}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <TabItem Header="Накопители">
+                        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25" Margin="10">
+                            <StackPanel Spacing="15">
+                                <ItemsControl ItemsSource="{Binding HardwareInfo.Storages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource SM.BackgroundPrimary}" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Spacing="5">
+                                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource SM.AccentPrimary}"/>
+                                                        <TextBlock><Run Text="Тип: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding Type}" Foreground="{StaticResource SM.TextHeading}"/></TextBlock>
+                                                        <TextBlock><Run Text="Объем: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding Capacity}" Foreground="{StaticResource SM.TextHeading}"/></TextBlock>
+                                                    </StackPanel>
+                                                    <Border Grid.Column="1" Background="{StaticResource SM.StatusGood}" CornerRadius="6" Padding="10,5" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding HealthStatus}" Foreground="White" FontWeight="Bold"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <TabItem Header="Материнская плата">
+                        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25" Margin="10">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Системная плата" FontSize="20" FontWeight="Bold" Foreground="{StaticResource SM.AccentPrimary}"/>
+                                <Grid ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="8">
+                                        <TextBlock><Run Text="Производитель: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Motherboard.Manufacturer}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                        <TextBlock><Run Text="Модель: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Motherboard.Model}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock><Run Text="Версия BIOS: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.Motherboard.BiosVersion}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+
+                    <TabItem Header="Система">
+                        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25" Margin="10">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Общая информация" FontSize="20" FontWeight="Bold" Foreground="{StaticResource SM.AccentPrimary}"/>
+                                <Grid ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="8">
+                                        <TextBlock><Run Text="Тип устройства: " Foreground="{StaticResource SM.TextPrimary}"/><Run Text="{Binding HardwareInfo.DeviceType}" Foreground="{StaticResource SM.TextHeading}" FontWeight="Bold"/></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+
+            <!-- ========== SETTINGS ========== -->
+<Grid Grid.Column="0" IsVisible="{Binding IsSettingsVisible}">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="250"/>
+        <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Боковое меню настроек -->
+    <Border Grid.Column="0" Background="{StaticResource SM.BackgroundSecondary}"
+            CornerRadius="12" Padding="20" Margin="0,0,20,0">
+        <StackPanel Spacing="5">
+            <TextBlock Text="Настройки" FontSize="20" FontWeight="Bold"
+                       Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,20"/>
+            
+            <Button Content=" Темы и цвета"
+                    Background="{Binding SelectedSettingsCategory, Converter={x:Static vm:CategoryToBackgroundConverter.Instance}, ConverterParameter=themes}"
+                    Foreground="{StaticResource SM.TextHeading}"
+                    BorderThickness="0"
+                    Padding="15,12"
+                    CornerRadius="8"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding SelectCategoryCommand}"
+                    CommandParameter="themes"/>
+            
+            <Button Content=" Язык"
+                    Background="Transparent"
+                    Foreground="{StaticResource SM.TextPrimary}"
+                    BorderThickness="0"
+                    Padding="15,12"
+                    CornerRadius="8"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding SelectCategoryCommand}"
+                    CommandParameter="language"/>
+            
+            <Button Content="️ Общие"
+                    Background="Transparent"
+                    Foreground="{StaticResource SM.TextPrimary}"
+                    BorderThickness="0"
+                    Padding="15,12"
+                    CornerRadius="8"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding SelectCategoryCommand}"
+                    CommandParameter="general"/>
+            
+            <Button Content="🔔 Уведомления"
+                    Background="Transparent"
+                    Foreground="{StaticResource SM.TextPrimary}"
+                    BorderThickness="0"
+                    Padding="15,12"
+                    CornerRadius="8"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding SelectCategoryCommand}"
+                    CommandParameter="notifications"/>
+            
+            <Button Content="🚀 Автозапуск"
+                    Background="Transparent"
+                    Foreground="{StaticResource SM.TextPrimary}"
+                    BorderThickness="0"
+                    Padding="15,12"
+                    CornerRadius="8"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding SelectCategoryCommand}"
+                    CommandParameter="autostart"/>
+        </StackPanel>
+    </Border>
+
+    <!-- Контент настроек -->
+    <Grid Grid.Column="1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Button Grid.Row="0" HorizontalAlignment="Left" Background="Transparent" BorderThickness="0"
+                Padding="10,5" Margin="0,0,0,20" Command="{Binding ShowDashboardCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="←" FontSize="20" Foreground="{StaticResource SM.AccentPrimary}"/>
+                <TextBlock Text="Назад" FontSize="16" Foreground="{StaticResource SM.AccentPrimary}"/>
+            </StackPanel>
+        </Button>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="20">
+                
+                <!-- ТЕМА И ЦВЕТА -->
+                <StackPanel IsVisible="{Binding SelectedSettingsCategory, Converter={x:Static vm:CategoryToVisibilityConverter.Instance}, ConverterParameter=themes}">
+                <TextBlock Text="🎨 Темы и цвета" FontSize="24" FontWeight="Bold"
+           Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,20"/>
+
+<TextBlock Text="Выберите тему оформления:" FontSize="16"
+           Foreground="{StaticResource SM.TextPrimary}" Margin="0,0,0,15"/>
+
+                   <ItemsControl ItemsSource="{Binding AvailableThemes}"
+              HorizontalAlignment="Stretch">
+    <ItemsControl.ItemTemplate>
+        <DataTemplate>
+            <Button Background="#1A1A1A"
+                    BorderBrush="{Binding AccentPrimary}"
+                    BorderThickness="2"
+                    CornerRadius="12"
+                    Padding="20"
+                    Margin="0,0,0,15"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding $parent[Grid].DataContext.ApplyThemeCommand}"
+                    CommandParameter="{Binding}">
+                <Button.Styles>
+                    <Style Selector="Button:pointerover">
+                        <Setter Property="Background" Value="#2D2D2D"/>
+                    </Style>
+                </Button.Styles>
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="32" Margin="0,0,20,0" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        <TextBlock FontSize="12" Foreground="#808080">
+                            <Run Text="Тип: "/>
+                            <Run Text="{Binding IsDark}"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Border Width="28" Height="28" CornerRadius="6" Background="{Binding BackgroundPrimary}" 
+                                BorderBrush="#404040" BorderThickness="1"/>
+                        <Border Width="28" Height="28" CornerRadius="6" Background="{Binding BackgroundSecondary}" 
+                                BorderBrush="#404040" BorderThickness="1"/>
+                        <Border Width="28" Height="28" CornerRadius="6" Background="{Binding AccentPrimary}" 
+                                BorderBrush="#404040" BorderThickness="1"/>
+                        <Border Width="28" Height="28" CornerRadius="6" Background="{Binding TextHeading}" 
+                                BorderBrush="#404040" BorderThickness="1"/>
+                    </StackPanel>
+                </Grid>
+            </Button>
+        </DataTemplate>
+    </ItemsControl.ItemTemplate>
+</ItemsControl>
+
+                    <Button Background="#1A1A1A"
+        BorderBrush="#00FFFF"
+        BorderThickness="2"
+        CornerRadius="12"
+        Padding="20"
+        Margin="0,10,0,0"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        Command="{Binding ApplyRandomThemeCommand}">
+    <Button.Styles>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#2D2D2D"/>
+        </Style>
+    </Button.Styles>
+    <Grid ColumnDefinitions="Auto,*">
+        <TextBlock Grid.Column="0" Text="🎲" FontSize="32" Margin="0,0,20,0" VerticalAlignment="Center"/>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <TextBlock Text="Случайная тема" FontSize="18" FontWeight="Bold" Foreground="#00FFFF"/>
+            <TextBlock Text="Сгенерировать уникальное сочетание цветов" FontSize="12" Foreground="#808080"/>
+        </StackPanel>
+    </Grid>
+</Button>
+                </StackPanel>
+
+                <!-- ЯЗЫК -->
+                <StackPanel IsVisible="{Binding SelectedSettingsCategory, Converter={x:Static vm:CategoryToVisibilityConverter.Instance}, ConverterParameter=language}">
+                    <TextBlock Text=" Язык" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,20"/>
+                    
+                    <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="10" Padding="20">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Выберите язык интерфейса:" FontSize="16"
+                                       Foreground="{StaticResource SM.TextPrimary}"/>
+                            <Button Content="🇷🇺 Русский"
+                                    Background="{StaticResource SM.AccentPrimary}"
+                                    Foreground="White"
+                                    Padding="15,10"
+                                    CornerRadius="8"
+                                    HorizontalAlignment="Left"/>
+                            <Button Content="🇬 English"
+                                    Background="Transparent"
+                                    Foreground="{StaticResource SM.TextPrimary}"
+                                    BorderBrush="{StaticResource SM.Border}"
+                                    BorderThickness="1"
+                                    Padding="15,10"
+                                    CornerRadius="8"
+                                    HorizontalAlignment="Left"/>
+                            <TextBlock Text="Функция в разработке..." FontSize="12" 
+                                       Foreground="{StaticResource SM.TextPrimary}" FontStyle="Italic" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ОБЩИЕ -->
+                <StackPanel IsVisible="{Binding SelectedSettingsCategory, Converter={x:Static vm:CategoryToVisibilityConverter.Instance}, ConverterParameter=general}">
+                    <TextBlock Text="⚙️ Общие настройки" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,20"/>
+                    
+                    <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="10" Padding="20">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Здесь будут общие настройки приложения" 
+                                       Foreground="{StaticResource SM.TextPrimary}"/>
+                            <TextBlock Text="Функция в разработке..." FontSize="12" 
+                                       Foreground="{StaticResource SM.TextPrimary}" FontStyle="Italic"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- УВЕДОМЛЕНИЯ -->
+                <StackPanel IsVisible="{Binding SelectedSettingsCategory, Converter={x:Static vm:CategoryToVisibilityConverter.Instance}, ConverterParameter=notifications}">
+                    <TextBlock Text=" Уведомления" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,20"/>
+                    
+                    <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="10" Padding="20">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Настройка уведомлений о перегреве и критических событиях" 
+                                       Foreground="{StaticResource SM.TextPrimary}"/>
+                            <TextBlock Text="Функция в разработке..." FontSize="12" 
+                                       Foreground="{StaticResource SM.TextPrimary}" FontStyle="Italic"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- АВТОЗАПУСК -->
+                <StackPanel IsVisible="{Binding SelectedSettingsCategory, Converter={x:Static vm:CategoryToVisibilityConverter.Instance}, ConverterParameter=autostart}">
+                    <TextBlock Text=" Автозапуск" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource SM.TextHeading}" Margin="0,0,0,20"/>
+                    
+                    <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="10" Padding="20">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Автоматический запуск SpecMind при старте системы" 
+                                       Foreground="{StaticResource SM.TextPrimary}"/>
+                            <TextBlock Text="Функция в разработке..." FontSize="12" 
+                                       Foreground="{StaticResource SM.TextPrimary}" FontStyle="Italic"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Grid>
+
+            <!-- ========== БОКОВАЯ ПАНЕЛЬ ========== -->
+            <StackPanel Grid.Column="1" Spacing="15" Margin="20,0,0,0">
                 <Button Content="Экспортировать отчет"
                         Background="{StaticResource SM.AccentPrimary}"
                         Foreground="White"
@@ -261,15 +589,15 @@
                         HorizontalAlignment="Stretch"/>
                 
                 <Button Content="Детальная информация"
-        Background="Transparent"
-        Foreground="{StaticResource SM.TextPrimary}"
-        BorderBrush="{StaticResource SM.Border}"
-        BorderThickness="1"
-        Padding="20,15"
-        CornerRadius="8"
-        FontSize="14"
-        HorizontalAlignment="Stretch"
-        Command="{Binding OpenDetailedWindowCommand}"/>
+                        Background="Transparent"
+                        Foreground="{StaticResource SM.TextPrimary}"
+                        BorderBrush="{StaticResource SM.Border}"
+                        BorderThickness="1"
+                        Padding="20,15"
+                        CornerRadius="8"
+                        FontSize="14"
+                        HorizontalAlignment="Stretch"
+                        Command="{Binding ShowDetailedCommand}"/>
                 
                 <Button Content="Мониторинг"
                         Background="Transparent"
@@ -280,6 +608,17 @@
                         CornerRadius="8"
                         FontSize="14"
                         HorizontalAlignment="Stretch"/>
+                
+                <Button Content="⚙️ Настройки"
+                        Background="Transparent"
+                        Foreground="{StaticResource SM.TextPrimary}"
+                        BorderBrush="{StaticResource SM.Border}"
+                        BorderThickness="1"
+                        Padding="20,15"
+                        CornerRadius="8"
+                        FontSize="14"
+                        HorizontalAlignment="Stretch"
+                        Command="{Binding ShowSettingsCommand}"/>
             </StackPanel>
         </Grid>
     </Grid>
