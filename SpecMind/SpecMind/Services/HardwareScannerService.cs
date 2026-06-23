@@ -164,20 +164,52 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             using var searcher = new ManagementObjectSearcher("SELECT ChassisTypes FROM Win32_SystemEnclosure");
             foreach (ManagementObject obj in searcher.Get())
             {
-                var chassisTypes = (ushort[])obj["ChassisTypes"];
+                var chassisTypes = obj["ChassisTypes"] as ushort[];
                 if (chassisTypes != null && chassisTypes.Length > 0)
                 {
-                    return chassisTypes[0] switch
-                    {
-                        8 or 9 or 10 or 14 => "Laptop",
-                        3 => "Desktop",
-                        13 => "All-in-One",
-                        _ => "Desktop"
-                    };
+                    var chassisType = chassisTypes[0];
+
+                    // Более полная проверка типов
+                    if (chassisType == 8 || chassisType == 9 || chassisType == 10 || chassisType == 14)
+                        return "Laptop";
+                    else if (chassisType == 3)
+                        return "Desktop";
+                    else if (chassisType == 13)
+                        return "All-in-One";
+                    else if (chassisType == 4 || chassisType == 5 || chassisType == 6 || chassisType == 7)
+                        return "Desktop"; // Low profile, Mini tower, Tower, Portable
+                    else if (chassisType == 11 || chassisType == 12)
+                        return "Laptop"; // Handheld, Sub Notebook
+                    else if (chassisType == 15 || chassisType == 16)
+                        return "Desktop"; // Space-saving, Lunch box
+                    else if (chassisType == 17 || chassisType == 18)
+                        return "Desktop"; // Main system chassis, Expansion chassis
+                    else if (chassisType == 19 || chassisType == 20)
+                        return "Desktop"; // SubChassis, Bus Expansion chassis
+                    else if (chassisType == 21 || chassisType == 22)
+                        return "Desktop"; // Peripheral chassis, Storage chassis
+                    else if (chassisType == 23 || chassisType == 24)
+                        return "Desktop"; // Rack mount chassis, Sealed-case PC
                 }
             }
         }
         catch { }
+
+        // Fallback: проверяем через Win32_ComputerSystem
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT PCSystemType FROM Win32_ComputerSystem");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                var pcSystemType = Convert.ToInt32(obj["PCSystemType"] ?? 0);
+                if (pcSystemType == 2)
+                    return "Laptop";
+                else if (pcSystemType == 1)
+                    return "Desktop";
+            }
+        }
+        catch { }
+
         return "Desktop";
     }
 
@@ -433,18 +465,44 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Product, SMBIOSBIOSVersion FROM Win32_BaseBoard");
+            // Пробуем Win32_BaseBoard
+            using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Product, Version, SMBIOSBIOSVersion FROM Win32_BaseBoard");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                var manufacturer = obj["Manufacturer"]?.ToString() ?? "";
+                var product = obj["Product"]?.ToString() ?? "";
+                var biosVersion = obj["SMBIOSBIOSVersion"]?.ToString() ?? "";
+
+                // Если данные есть, возвращаем их
+                if (!string.IsNullOrEmpty(manufacturer) && !manufacturer.Contains("To be filled") && !manufacturer.Contains("Default"))
+                {
+                    return new MotherboardInfo
+                    {
+                        Manufacturer = manufacturer.Trim(),
+                        Model = product.Trim(),
+                        BiosVersion = biosVersion.Trim()
+                    };
+                }
+            }
+        }
+        catch { }
+
+        // Fallback: пробуем Win32_ComputerSystem
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Model FROM Win32_ComputerSystem");
             foreach (ManagementObject obj in searcher.Get())
             {
                 return new MotherboardInfo
                 {
                     Manufacturer = obj["Manufacturer"]?.ToString() ?? "Unknown",
-                    Model = obj["Product"]?.ToString() ?? "Unknown",
-                    BiosVersion = obj["SMBIOSBIOSVersion"]?.ToString() ?? "Unknown"
+                    Model = obj["Model"]?.ToString() ?? "Unknown",
+                    BiosVersion = "Unknown"
                 };
             }
         }
         catch { }
+
         return new MotherboardInfo();
     }
 

@@ -261,14 +261,15 @@
                         HorizontalAlignment="Stretch"/>
                 
                 <Button Content="Детальная информация"
-                        Background="Transparent"
-                        Foreground="{StaticResource SM.TextPrimary}"
-                        BorderBrush="{StaticResource SM.Border}"
-                        BorderThickness="1"
-                        Padding="20,15"
-                        CornerRadius="8"
-                        FontSize="14"
-                        HorizontalAlignment="Stretch"/>
+        Background="Transparent"
+        Foreground="{StaticResource SM.TextPrimary}"
+        BorderBrush="{StaticResource SM.Border}"
+        BorderThickness="1"
+        Padding="20,15"
+        CornerRadius="8"
+        FontSize="14"
+        HorizontalAlignment="Stretch"
+        Command="{Binding OpenDetailedWindowCommand}"/>
                 
                 <Button Content="Мониторинг"
                         Background="Transparent"
