@@ -1,4 +1,5 @@
-﻿using Avalonia.Data.Converters;
+﻿#pragma warning disable CS8765, CS8600, CS8601, CS8602, CS8603, CS8604
+using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
 

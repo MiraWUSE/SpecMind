@@ -1,4 +1,5 @@
-﻿using Avalonia.Data.Converters;
+﻿#pragma warning disable CS8765, CS8600, CS8601, CS8602, CS8603, CS8604
+using Avalonia.Data.Converters;
 using Avalonia.Media;
 using System;
 using System.Globalization;
@@ -13,7 +14,6 @@ public class CategoryToBackgroundConverter : IValueConverter
     {
         if (value is string selected && parameter is string category)
         {
-            // Если категория выбрана - возвращаем акцентный цвет, иначе прозрачный
             return selected == category ?
                 (object)Color.Parse("#7AA9E0") :
                 (object)Colors.Transparent;
