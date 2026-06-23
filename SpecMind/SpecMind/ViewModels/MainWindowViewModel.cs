@@ -169,4 +169,21 @@ public partial class MainWindowViewModel : ViewModelBase
         var randomTheme = ThemeService.GenerateRandomTheme();
         ThemeService.ApplyTheme(randomTheme);
     }
+
+    [RelayCommand]
+    private async Task ExportReport()
+    {
+        try
+        {
+            var filePath = await ReportExporterService.ExportToDesktopAsync(HardwareInfo);
+
+            // Можно показать уведомление (опционально)
+            System.Diagnostics.Debug.WriteLine($"Отчёт сохранён: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Ошибка экспорта: {ex.Message}");
+        }
+    }
+
 }
