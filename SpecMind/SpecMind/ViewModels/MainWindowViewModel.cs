@@ -6,6 +6,9 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 
 namespace SpecMind.ViewModels;
 
@@ -25,6 +28,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isSettingsVisible = false;
+
+    [ObservableProperty]
+    private bool _isExportVisible = false;
 
     [ObservableProperty]
     private string _selectedSettingsCategory = "themes";
@@ -60,6 +66,9 @@ public partial class MainWindowViewModel : ViewModelBase
             Interval = TimeSpan.FromSeconds(1)
         };
         _monitoringTimer.Tick += async (s, e) => await UpdateMonitoringData();
+
+        // Запускаем сбор данных сразу при старте приложения
+        _monitoringTimer.Start();
     }
 
     public void StartMonitoring()
@@ -107,6 +116,8 @@ public partial class MainWindowViewModel : ViewModelBase
         AvailableThemes = new ObservableCollection<AppTheme>(ThemeService.GetAvailableThemes());
     }
 
+    // ========== НАВИГАЦИЯ ==========
+
     [RelayCommand]
     private void ShowDetailed()
     {
@@ -114,6 +125,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsDetailedVisible = true;
         IsMonitoringVisible = false;
         IsSettingsVisible = false;
+        IsExportVisible = false;
         StopMonitoring();
     }
 
@@ -124,7 +136,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IsDetailedVisible = false;
         IsMonitoringVisible = false;
         IsSettingsVisible = false;
-        StopMonitoring();
+        IsExportVisible = false;
+        // Не останавливаем мониторинг - данные уже собираются в фоне
     }
 
     [RelayCommand]
@@ -134,7 +147,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IsDetailedVisible = false;
         IsMonitoringVisible = true;
         IsSettingsVisible = false;
-        StartMonitoring();
+        IsExportVisible = false;
+        // Таймер уже запущен, данные есть
     }
 
     [RelayCommand]
@@ -144,8 +158,18 @@ public partial class MainWindowViewModel : ViewModelBase
         IsDetailedVisible = false;
         IsMonitoringVisible = false;
         IsSettingsVisible = true;
+        IsExportVisible = false;
         SelectedSettingsCategory = "themes";
-        StopMonitoring();
+    }
+
+    [RelayCommand]
+    private void ShowExport()
+    {
+        IsDashboardVisible = false;
+        IsDetailedVisible = false;
+        IsMonitoringVisible = false;
+        IsSettingsVisible = false;
+        IsExportVisible = true;
     }
 
     [RelayCommand]
@@ -153,6 +177,8 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedSettingsCategory = category;
     }
+
+    // ========== ТЕМЫ ==========
 
     [RelayCommand]
     private void ApplyTheme(AppTheme theme)
@@ -170,20 +196,67 @@ public partial class MainWindowViewModel : ViewModelBase
         ThemeService.ApplyTheme(randomTheme);
     }
 
+    // ========== ЭКСПОРТ ОТЧЁТОВ ==========
+
     [RelayCommand]
-    private async Task ExportReport()
+    private async Task ExportTxt()
+    {
+        await SaveReportAsync("txt", "Текстовый файл", ReportExporterService.ExportToTxtAsync);
+    }
+
+    [RelayCommand]
+    private async Task ExportJson()
+    {
+        await SaveReportAsync("json", "JSON файл", ReportExporterService.ExportToJsonAsync);
+    }
+
+    [RelayCommand]
+    private async Task ExportCsv()
+    {
+        await SaveReportAsync("csv", "CSV таблица", ReportExporterService.ExportToCsvAsync);
+    }
+
+    [RelayCommand]
+    private async Task ExportHtml()
+    {
+        await SaveReportAsync("html", "HTML страница", ReportExporterService.ExportToHtmlAsync);
+    }
+
+    private async Task SaveReportAsync(string extension, string description, Func<HardwareInfo, string, Task<string>> exporter)
     {
         try
         {
-            var filePath = await ReportExporterService.ExportToDesktopAsync(HardwareInfo);
+            var topLevel = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+            var window = topLevel?.MainWindow;
 
-            // Можно показать уведомление (опционально)
-            System.Diagnostics.Debug.WriteLine($"Отчёт сохранён: {filePath}");
+            if (window == null) return;
+
+            var storageProvider = window.StorageProvider;
+            var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = $"Сохранить отчёт ({extension.ToUpper()})",
+                DefaultExtension = extension,
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType(description)
+                    {
+                        Patterns = new[] { $"*.{extension}" }
+                    }
+                },
+                SuggestedFileName = $"SpecMind_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}"
+            });
+
+            if (file != null)
+            {
+                var filePath = file.Path.LocalPath;
+                await exporter(HardwareInfo, filePath);
+
+                System.Diagnostics.Debug.WriteLine($"Отчёт сохранён: {filePath}");
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Ошибка экспорта: {ex.Message}");
         }
     }
-
 }

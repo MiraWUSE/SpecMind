@@ -61,9 +61,7 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             // CPU сенсоры
             if (hardware.HardwareType == HardwareType.Cpu)
             {
-                float firstTemp = 0;
-                float maxTemp = 0;
-                int tempCount = 0;
+                List<float> temperatures = new List<float>();
 
                 foreach (var sensor in hardware.Sensors)
                 {
@@ -71,19 +69,14 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                     {
                         var value = sensor.Value ?? 0;
 
-                        // Собираем все температуры CPU
+                        // Собираем все валидные температуры CPU
                         if (value > 0 && value < 150)
                         {
-                            tempCount++;
-                            if (firstTemp == 0)
-                                firstTemp = value;
+                            temperatures.Add(value);
 
-                            if (value > maxTemp)
-                                maxTemp = value;
-
-                            // Проверяем конкретные имена
+                            // Ищем Package или Core температуры
                             var name = sensor.Name.ToLower();
-                            if (name.Contains("package") || name.Contains("cpu") || name.Contains("core"))
+                            if (name.Contains("package") || name.Contains("cpu package") || name.Contains("tctl"))
                             {
                                 sensors.CpuTemperature = value;
                             }
@@ -94,16 +87,12 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                         sensors.CpuUsage = sensor.Value ?? 0;
                 }
 
-                // Если ни один сенсор не подошел по имени, берем максимальную температуру
-                if (sensors.CpuTemperature == 0 && maxTemp > 0)
+                // Если не нашли Package, берем среднюю или максимальную температуру
+                if (sensors.CpuTemperature == 0 && temperatures.Count > 0)
                 {
-                    sensors.CpuTemperature = maxTemp;
-                }
-
-                // Если всё ещё 0, берем первую найденную температуру
-                if (sensors.CpuTemperature == 0 && firstTemp > 0)
-                {
-                    sensors.CpuTemperature = firstTemp;
+                    sensors.CpuTemperature = temperatures.Count > 1
+                        ? temperatures[temperatures.Count - 2] // Предпоследняя (обычно Package)
+                        : temperatures[temperatures.Count - 1]; // Последняя
                 }
 
                 // Вентиляторы CPU
@@ -139,7 +128,8 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             {
                 foreach (var sensor in hardware.Sensors)
                 {
-                    if (sensor.SensorType == SensorType.Temperature && sensor.Name.Contains("Motherboard"))
+                    if (sensor.SensorType == SensorType.Temperature &&
+                        (sensor.Name.Contains("Motherboard") || sensor.Name.Contains("System")))
                         sensors.MotherboardTemperature = sensor.Value ?? 0;
 
                     if (sensor.SensorType == SensorType.Fan)
@@ -169,43 +159,13 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                 {
                     var chassisType = chassisTypes[0];
 
-                    // Более полная проверка типов
                     if (chassisType == 8 || chassisType == 9 || chassisType == 10 || chassisType == 14)
                         return "Laptop";
                     else if (chassisType == 3)
                         return "Desktop";
                     else if (chassisType == 13)
                         return "All-in-One";
-                    else if (chassisType == 4 || chassisType == 5 || chassisType == 6 || chassisType == 7)
-                        return "Desktop"; // Low profile, Mini tower, Tower, Portable
-                    else if (chassisType == 11 || chassisType == 12)
-                        return "Laptop"; // Handheld, Sub Notebook
-                    else if (chassisType == 15 || chassisType == 16)
-                        return "Desktop"; // Space-saving, Lunch box
-                    else if (chassisType == 17 || chassisType == 18)
-                        return "Desktop"; // Main system chassis, Expansion chassis
-                    else if (chassisType == 19 || chassisType == 20)
-                        return "Desktop"; // SubChassis, Bus Expansion chassis
-                    else if (chassisType == 21 || chassisType == 22)
-                        return "Desktop"; // Peripheral chassis, Storage chassis
-                    else if (chassisType == 23 || chassisType == 24)
-                        return "Desktop"; // Rack mount chassis, Sealed-case PC
                 }
-            }
-        }
-        catch { }
-
-        // Fallback: проверяем через Win32_ComputerSystem
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT PCSystemType FROM Win32_ComputerSystem");
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                var pcSystemType = Convert.ToInt32(obj["PCSystemType"] ?? 0);
-                if (pcSystemType == 2)
-                    return "Laptop";
-                else if (pcSystemType == 1)
-                    return "Desktop";
             }
         }
         catch { }
@@ -217,15 +177,56 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed FROM Win32_Processor");
+            using var searcher = new ManagementObjectSearcher("SELECT Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed, Architecture, SocketDesignation, Manufacturer, L2CacheSize, L3CacheSize FROM Win32_Processor");
             foreach (ManagementObject obj in searcher.Get())
             {
+                var name = obj["Name"]?.ToString() ?? "Unknown";
+                var architecture = Convert.ToInt32(obj["Architecture"] ?? 0);
+                var socket = obj["SocketDesignation"]?.ToString() ?? "";
+                var manufacturer = obj["Manufacturer"]?.ToString() ?? "";
+
+                string archText = architecture switch
+                {
+                    0 => "x86",
+                    1 => "MIPS",
+                    2 => "Alpha",
+                    3 => "PowerPC",
+                    5 => "ARM",
+                    6 => "IA64",
+                    9 => "x64",
+                    _ => "Unknown"
+                };
+
+                var baseClock = Convert.ToUInt32(obj["MaxClockSpeed"] ?? 0);
+                var maxClock = baseClock > 0 ? (uint)(baseClock * 1.5) : 0;
+
+                // Получаем кэш
+                var l2Cache = obj["L2CacheSize"] != null ? Convert.ToUInt32(obj["L2CacheSize"]) : 0;
+                var l3Cache = obj["L3CacheSize"] != null ? Convert.ToUInt32(obj["L3CacheSize"]) : 0;
+
+                // L1 кэш обычно равен количеству ядер * 64KB или 32KB
+                var cores = Convert.ToInt32(obj["NumberOfCores"] ?? 1);
+                var l1Cache = cores * 64; // Примерно
+
+                string l1Text = l1Cache > 0 ? $"{l1Cache} KB" : "Unknown";
+                string l2Text = l2Cache > 0 ? $"{l2Cache} KB" : "Unknown";
+                string l3Text = l3Cache > 0 ? $"{l3Cache} KB" : "Unknown";
+
                 return new CpuInfo
                 {
-                    Name = obj["Name"]?.ToString() ?? "Unknown",
-                    Cores = Convert.ToInt32(obj["NumberOfCores"] ?? 0),
+                    Name = name,
+                    Cores = cores,
                     Threads = Convert.ToInt32(obj["NumberOfLogicalProcessors"] ?? 0),
-                    BaseClock = $"{obj["MaxClockSpeed"]} MHz"
+                    BaseClock = $"{baseClock} MHz",
+                    MaxClock = maxClock > 0 ? $"{maxClock} MHz" : "Unknown",
+                    CacheL1 = l1Text,
+                    CacheL2 = l2Text,
+                    CacheL3 = l3Text,
+                    Architecture = archText,
+                    Socket = socket,
+                    Manufacturer = manufacturer.Contains("Intel") ? "Intel" :
+                                 manufacturer.Contains("AMD") ? "AMD" : "Unknown",
+                    SerialNumber = "Unknown"
                 };
             }
         }
@@ -237,25 +238,124 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT Name, DriverVersion FROM Win32_VideoController");
+            using var searcher = new ManagementObjectSearcher("SELECT Name, DriverVersion, DriverDate, PNPDeviceID FROM Win32_VideoController");
             foreach (ManagementObject obj in searcher.Get())
             {
                 var gpuName = obj["Name"]?.ToString() ?? "Unknown";
                 var driverVersion = obj["DriverVersion"]?.ToString() ?? "Unknown";
+                var driverDate = obj["DriverDate"]?.ToString() ?? "Unknown";
+                var pnpDeviceId = obj["PNPDeviceID"]?.ToString() ?? "";
 
-                // Получаем VRAM через LibreHardwareMonitor (более надежно)
+                string deviceId = "Unknown";
+                if (pnpDeviceId.Contains("VEN_") && pnpDeviceId.Contains("&DEV_"))
+                {
+                    var venStart = pnpDeviceId.IndexOf("VEN_") + 4;
+                    var devStart = pnpDeviceId.IndexOf("&DEV_") + 5;
+                    var ven = pnpDeviceId.Substring(venStart, 4);
+                    var dev = pnpDeviceId.Substring(devStart, 4);
+                    deviceId = $"VEN_{ven}&DEV_{dev}";
+                }
+
+                string manufacturer = "Unknown";
+                if (gpuName.Contains("NVIDIA") || pnpDeviceId.Contains("VEN_10DE"))
+                    manufacturer = "NVIDIA";
+                else if (gpuName.Contains("AMD") || gpuName.Contains("Radeon") || pnpDeviceId.Contains("VEN_1002"))
+                    manufacturer = "AMD";
+                else if (gpuName.Contains("Intel"))
+                    manufacturer = "Intel";
+
                 string vram = GetGpuVramFromLHM();
+                var gpuDatabase = GetGpuDatabase();
+                var gpuKey = gpuName.ToLower();
+
+                int cudaCores = 0;
+                string tdp = "Unknown";
+                string pcieVersion = "Unknown";
+
+                foreach (var kvp in gpuDatabase)
+                {
+                    if (gpuKey.Contains(kvp.Key))
+                    {
+                        cudaCores = kvp.Value.CudaCores;
+                        tdp = kvp.Value.Tdp;
+                        break;
+                    }
+                }
+
+                if (pnpDeviceId.Contains("PCI\\VEN_"))
+                {
+                    pcieVersion = "PCIe 3.0";
+                    if (gpuName.Contains("RTX 40") || gpuName.Contains("RX 7000"))
+                        pcieVersion = "PCIe 4.0";
+                    else if (gpuName.Contains("RTX 30") || gpuName.Contains("RX 6000"))
+                        pcieVersion = "PCIe 4.0";
+                }
+
+                if (driverDate.Length >= 8)
+                {
+                    driverDate = $"{driverDate.Substring(6, 2)}.{driverDate.Substring(4, 2)}.{driverDate.Substring(0, 4)}";
+                }
 
                 return new GpuInfo
                 {
                     Name = gpuName,
                     Vram = vram,
-                    DriverVersion = driverVersion
+                    DriverVersion = driverVersion,
+                    DriverDate = driverDate,
+                    CudaCores = cudaCores,
+                    Tdp = tdp,
+                    PcieVersion = pcieVersion,
+                    Manufacturer = manufacturer,
+                    DeviceId = deviceId,
+                    SerialNumber = "Unknown"
                 };
             }
         }
         catch { }
         return new GpuInfo();
+    }
+
+    private Dictionary<string, GpuSpecs> GetGpuDatabase()
+    {
+        return new Dictionary<string, GpuSpecs>
+        {
+            { "rtx 4090", new GpuSpecs { CudaCores = 16384, Tdp = "450W" } },
+            { "rtx 4080", new GpuSpecs { CudaCores = 9728, Tdp = "320W" } },
+            { "rtx 4070 ti", new GpuSpecs { CudaCores = 7680, Tdp = "285W" } },
+            { "rtx 4070", new GpuSpecs { CudaCores = 5888, Tdp = "200W" } },
+            { "rtx 4060 ti", new GpuSpecs { CudaCores = 4352, Tdp = "160W" } },
+            { "rtx 4060", new GpuSpecs { CudaCores = 3072, Tdp = "115W" } },
+            { "rtx 3090", new GpuSpecs { CudaCores = 10496, Tdp = "350W" } },
+            { "rtx 3080 ti", new GpuSpecs { CudaCores = 10240, Tdp = "350W" } },
+            { "rtx 3080", new GpuSpecs { CudaCores = 8704, Tdp = "320W" } },
+            { "rtx 3070 ti", new GpuSpecs { CudaCores = 6144, Tdp = "290W" } },
+            { "rtx 3070", new GpuSpecs { CudaCores = 5888, Tdp = "220W" } },
+            { "rtx 3060 ti", new GpuSpecs { CudaCores = 4864, Tdp = "200W" } },
+            { "rtx 3060", new GpuSpecs { CudaCores = 3584, Tdp = "170W" } },
+            { "rtx 3050", new GpuSpecs { CudaCores = 2560, Tdp = "130W" } },
+            { "rtx 2080 ti", new GpuSpecs { CudaCores = 4352, Tdp = "250W" } },
+            { "rtx 2080", new GpuSpecs { CudaCores = 2944, Tdp = "215W" } },
+            { "rtx 2070", new GpuSpecs { CudaCores = 2304, Tdp = "175W" } },
+            { "rtx 2060", new GpuSpecs { CudaCores = 1920, Tdp = "160W" } },
+            { "gtx 1080 ti", new GpuSpecs { CudaCores = 3584, Tdp = "250W" } },
+            { "gtx 1080", new GpuSpecs { CudaCores = 2560, Tdp = "180W" } },
+            { "gtx 1070", new GpuSpecs { CudaCores = 1920, Tdp = "150W" } },
+            { "gtx 1060", new GpuSpecs { CudaCores = 1280, Tdp = "120W" } },
+            { "gtx 1050 ti", new GpuSpecs { CudaCores = 768, Tdp = "75W" } },
+            { "rx 7900 xtx", new GpuSpecs { CudaCores = 6144, Tdp = "355W" } },
+            { "rx 7900 xt", new GpuSpecs { CudaCores = 5376, Tdp = "315W" } },
+            { "rx 7800 xt", new GpuSpecs { CudaCores = 3840, Tdp = "263W" } },
+            { "rx 7700 xt", new GpuSpecs { CudaCores = 3456, Tdp = "245W" } },
+            { "rx 7600", new GpuSpecs { CudaCores = 2048, Tdp = "165W" } },
+            { "rx 6950 xt", new GpuSpecs { CudaCores = 5120, Tdp = "335W" } },
+            { "rx 6900 xt", new GpuSpecs { CudaCores = 5120, Tdp = "300W" } },
+            { "rx 6800 xt", new GpuSpecs { CudaCores = 4608, Tdp = "300W" } },
+            { "rx 6800", new GpuSpecs { CudaCores = 3840, Tdp = "250W" } },
+            { "rx 6700 xt", new GpuSpecs { CudaCores = 2560, Tdp = "230W" } },
+            { "rx 6600 xt", new GpuSpecs { CudaCores = 2048, Tdp = "160W" } },
+            { "rx 6600", new GpuSpecs { CudaCores = 1792, Tdp = "132W" } },
+            { "rx 6500 xt", new GpuSpecs { CudaCores = 1024, Tdp = "107W" } }
+        };
     }
 
     private string GetGpuVramFromLHM()
@@ -268,17 +368,8 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             {
                 hardware.Update();
 
-                // Ищем сенсор памяти GPU
                 foreach (var sensor in hardware.Sensors)
                 {
-                    if (sensor.SensorType == SensorType.SmallData &&
-                        (sensor.Name.Contains("GPU Memory Used") || sensor.Name.Contains("D3D Dedicated Memory Used")))
-                    {
-                        // Это использованная память, не общий объем
-                        continue;
-                    }
-
-                    // Пробуем найти сенсор с общим объемом памяти
                     if (sensor.SensorType == SensorType.SmallData && sensor.Name.Contains("Memory Total"))
                     {
                         var mb = sensor.Value ?? 0;
@@ -287,10 +378,8 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                     }
                 }
 
-                // Если не нашли через сенсоры, определяем по названию модели
                 var name = hardware.Name?.ToLower() ?? "";
 
-                // База данных популярных видеокарт (VRAM в GB)
                 var vramDatabase = new Dictionary<string, int>
                 {
                     { "rtx 4090", 24 }, { "rtx 4080", 16 }, { "rtx 4070 ti", 12 },
@@ -326,18 +415,20 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT Capacity, Speed, SMBIOSMemoryType, MemoryType, ConfiguredClockSpeed, Manufacturer, PartNumber FROM Win32_PhysicalMemory");
+            using var searcher = new ManagementObjectSearcher("SELECT Capacity, Speed, SMBIOSMemoryType, MemoryType, ConfiguredClockSpeed, Manufacturer, PartNumber, FormFactor FROM Win32_PhysicalMemory");
             ulong totalCapacity = 0;
             string type = "Unknown";
             int maxSpeed = 0;
             string manufacturer = "";
             string partNumber = "";
+            int formFactor = 0;
+            int slotCount = 0;
 
             foreach (ManagementObject obj in searcher.Get())
             {
                 totalCapacity += Convert.ToUInt64(obj["Capacity"] ?? 0);
+                slotCount++;
 
-                // Получаем максимальную скорость
                 var currentSpeed = Convert.ToUInt32(obj["Speed"] ?? 0);
                 if (currentSpeed > maxSpeed)
                     maxSpeed = (int)currentSpeed;
@@ -346,9 +437,9 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                 if (configuredSpeed > maxSpeed)
                     maxSpeed = (int)configuredSpeed;
 
-                // Получаем производителя и модель
                 var mfr = obj["Manufacturer"]?.ToString() ?? "";
                 var pn = obj["PartNumber"]?.ToString() ?? "";
+                formFactor = Convert.ToInt32(obj["FormFactor"] ?? 0);
 
                 if (!string.IsNullOrEmpty(mfr) && !mfr.Contains("Unknown") && !mfr.Contains("0000"))
                     manufacturer = mfr.Trim();
@@ -357,7 +448,6 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                     partNumber = pn.Trim();
             }
 
-            // Определяем тип памяти по скорости
             if (maxSpeed > 0)
             {
                 type = maxSpeed switch
@@ -369,7 +459,14 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                 };
             }
 
-            // Формируем название модуля RAM
+            string formFactorText = formFactor switch
+            {
+                0 => "Unknown",
+                8 => "DIMM",
+                12 => "SODIMM",
+                _ => "Unknown"
+            };
+
             string ramName = "Неизвестно";
             if (!string.IsNullOrEmpty(manufacturer) && !string.IsNullOrEmpty(partNumber))
             {
@@ -385,17 +482,37 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             }
 
             var totalGB = totalCapacity / (1024 * 1024 * 1024);
+            int totalSlots = GetTotalRamSlots();
 
             return new RamInfo
             {
                 ModuleName = ramName,
                 TotalCapacity = $"{totalGB} GB",
                 Type = type,
-                Speed = maxSpeed > 0 ? $"{maxSpeed} MHz" : "0 MHz"
+                Speed = maxSpeed > 0 ? $"{maxSpeed} MHz" : "0 MHz",
+                FormFactor = formFactorText,
+                Manufacturer = manufacturer,
+                PartNumber = partNumber,
+                SlotsUsed = slotCount,
+                TotalSlots = totalSlots
             };
         }
         catch { }
         return new RamInfo();
+    }
+
+    private int GetTotalRamSlots()
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT MemoryDevices FROM Win32_PhysicalMemoryArray");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                return Convert.ToInt32(obj["MemoryDevices"] ?? 0);
+            }
+        }
+        catch { }
+        return 0;
     }
 
     private List<StorageInfo> GetStorageInfo()
@@ -410,42 +527,42 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                 var sizeGB = sizeBytes / (1024 * 1024 * 1024);
 
                 var modelName = obj["Model"]?.ToString() ?? "Unknown";
-                var caption = obj["Caption"]?.ToString() ?? "";
                 var mediaType = obj["MediaType"]?.ToString() ?? "Unknown";
                 var interfaceType = obj["InterfaceType"]?.ToString() ?? "Unknown";
+                var serialNumber = obj["SerialNumber"]?.ToString() ?? "Unknown";
+
+                // Убираем лишние пробелы и подчеркивания из serial number
+                if (serialNumber.Contains("_"))
+                {
+                    serialNumber = serialNumber.Replace("_", "").Trim();
+                }
 
                 string storageType = "Unknown";
+                string interfaceText = interfaceType;
 
-                // Определяем тип накопителя по множеству признаков
                 var modelLower = modelName.ToLower();
                 var interfaceLower = interfaceType.ToLower();
 
-                // NVMe накопители (приоритетная проверка)
+                // Определяем тип накопителя
                 if (interfaceLower.Contains("nvme") || interfaceLower.Contains("pcie") ||
-                    modelLower.Contains("nvme") || modelLower.Contains("kc3000") ||
-                    modelLower.Contains("skc3000") || modelLower.Contains("980") ||
-                    modelLower.Contains("970") || modelLower.Contains("960") ||
-                    modelLower.Contains("sn850") || modelLower.Contains("sn750") ||
-                    modelLower.Contains("sn550") || modelLower.Contains("wd black") ||
-                    modelLower.Contains("samsung") && modelLower.Contains("9"))
+                    modelLower.Contains("nvme") || modelLower.Contains("skc3000") ||
+                    modelLower.Contains("980") || modelLower.Contains("970") ||
+                    modelLower.Contains("sn850") || modelLower.Contains("sn750"))
                 {
                     storageType = "NVMe";
+                    interfaceText = "NVMe/PCIe";
                 }
-                // SSD накопители
                 else if (mediaType.Contains("ssd", StringComparison.OrdinalIgnoreCase) ||
-                         modelLower.Contains("ssd") ||
-                         interfaceLower.Contains("ssd") ||
-                         modelLower.Contains("samsung") ||
-                         modelLower.Contains("crucial") ||
-                         modelLower.Contains("kingston") && !modelLower.Contains("hdd"))
+                         modelLower.Contains("ssd") || modelLower.Contains("samsung") ||
+                         modelLower.Contains("crucial") || modelLower.Contains("kingston"))
                 {
                     storageType = "SSD";
+                    interfaceText = interfaceLower.Contains("sata") ? "SATA" : "SATA/Unknown";
                 }
-                // HDD накопители
-                else if (mediaType.Contains("fixed", StringComparison.OrdinalIgnoreCase) ||
-                         interfaceLower.Contains("ide") || interfaceLower.Contains("sata") && !interfaceLower.Contains("pcie"))
+                else
                 {
                     storageType = "HDD";
+                    interfaceText = interfaceLower.Contains("sata") ? "SATA" : "IDE/SATA";
                 }
 
                 storages.Add(new StorageInfo
@@ -453,7 +570,12 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                     Name = modelName,
                     Type = storageType,
                     Capacity = $"{sizeGB} GB",
-                    HealthStatus = "Good"
+                    HealthStatus = "Good",
+                    Interface = interfaceText,
+                    SerialNumber = serialNumber,
+                    Temperature = 0,
+                    PowerOnHours = 0,
+                    FirmwareVersion = "Unknown"
                 });
             }
         }
@@ -465,29 +587,32 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
     {
         try
         {
-            // Пробуем Win32_BaseBoard
-            using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Product, Version, SMBIOSBIOSVersion FROM Win32_BaseBoard");
+            using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Product, Version FROM Win32_BaseBoard");
             foreach (ManagementObject obj in searcher.Get())
             {
                 var manufacturer = obj["Manufacturer"]?.ToString() ?? "";
                 var product = obj["Product"]?.ToString() ?? "";
-                var biosVersion = obj["SMBIOSBIOSVersion"]?.ToString() ?? "";
+                var version = obj["Version"]?.ToString() ?? "";
 
-                // Если данные есть, возвращаем их
                 if (!string.IsNullOrEmpty(manufacturer) && !manufacturer.Contains("To be filled") && !manufacturer.Contains("Default"))
                 {
+                    string biosDate = GetBiosDate();
+                    string chipset = GetChipset();
+
                     return new MotherboardInfo
                     {
                         Manufacturer = manufacturer.Trim(),
                         Model = product.Trim(),
-                        BiosVersion = biosVersion.Trim()
+                        BiosVersion = version.Trim(),
+                        BiosDate = biosDate,
+                        Chipset = chipset,
+                        SerialNumber = "Unknown"
                     };
                 }
             }
         }
         catch { }
 
-        // Fallback: пробуем Win32_ComputerSystem
         try
         {
             using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Model FROM Win32_ComputerSystem");
@@ -497,13 +622,60 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
                 {
                     Manufacturer = obj["Manufacturer"]?.ToString() ?? "Unknown",
                     Model = obj["Model"]?.ToString() ?? "Unknown",
-                    BiosVersion = "Unknown"
+                    BiosVersion = "Unknown",
+                    BiosDate = GetBiosDate(),
+                    Chipset = GetChipset(),
+                    SerialNumber = "Unknown"
                 };
             }
         }
         catch { }
 
         return new MotherboardInfo();
+    }
+
+    private string GetBiosDate()
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT ReleaseDate FROM Win32_BIOS");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                var releaseDate = obj["ReleaseDate"]?.ToString() ?? "";
+                if (releaseDate.Length >= 8)
+                {
+                    return $"{releaseDate.Substring(6, 2)}.{releaseDate.Substring(4, 2)}.{releaseDate.Substring(0, 4)}";
+                }
+            }
+        }
+        catch { }
+        return "Unknown";
+    }
+
+    private string GetChipset()
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_ServerFeature");
+            // Чипсет сложно получить через WMI, пробуем через LibreHardwareMonitor
+            if (_computer != null)
+            {
+                foreach (var hardware in _computer.Hardware)
+                {
+                    if (hardware.HardwareType == HardwareType.Motherboard)
+                    {
+                        // Ищем информацию о чипсете в названии
+                        var name = hardware.Name?.ToLower() ?? "";
+                        if (name.Contains("intel") || name.Contains("amd") || name.Contains("chipset"))
+                        {
+                            return hardware.Name;
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+        return "Unknown";
     }
 
     public void Dispose()
@@ -514,4 +686,10 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             _disposed = true;
         }
     }
+}
+
+public class GpuSpecs
+{
+    public int CudaCores { get; set; }
+    public string Tdp { get; set; } = "";
 }

@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using System;
 using System.Collections.Generic;
@@ -40,9 +41,14 @@ public partial class SimpleLineChart : UserControl
     }
 
     private Canvas? _chartCanvas;
-    private Border? _tooltipBorder;
-    private TextBlock? _tooltipText;
     private bool _isDrawing;
+    private List<Point> _points = new();
+    private int _hoveredIndex = -1;
+    private Border? _tooltipBorder;
+    private TextBlock? _tooltipValue;
+    private TextBlock? _tooltipTime;
+    private Line? _verticalLine;
+    private Ellipse? _hoverDot;
 
     public SimpleLineChart()
     {
@@ -52,28 +58,72 @@ public partial class SimpleLineChart : UserControl
             ClipToBounds = true
         };
 
+        // Tooltip с двумя строками
         _tooltipBorder = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(30, 30, 45)),
+            Background = new SolidColorBrush(Color.FromRgb(40, 40, 60)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(122, 169, 224)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8, 4),
+            BorderThickness = new Thickness(1.5),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12, 8),
             IsVisible = false,
             IsHitTestVisible = false,
-            ZIndex = 100
+            ZIndex = 100,
+            BoxShadow = new BoxShadows(new BoxShadow
+            {
+                Color = Color.FromArgb(150, 0, 0, 0),
+                Blur = 15,
+                OffsetX = 0,
+                OffsetY = 6
+            })
         };
 
-        _tooltipText = new TextBlock
+        var tooltipStack = new StackPanel { Orientation = Orientation.Vertical, Spacing = 2 };
+
+        _tooltipValue = new TextBlock
         {
-            FontSize = 12,
-            Foreground = Brushes.White
+            FontSize = 14,
+            Foreground = Brushes.White,
+            FontWeight = FontWeight.Bold,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
         };
 
-        _tooltipBorder.Child = _tooltipText;
+        _tooltipTime = new TextBlock
+        {
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 200)),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+        };
+
+        tooltipStack.Children.Add(_tooltipValue);
+        tooltipStack.Children.Add(_tooltipTime);
+        _tooltipBorder.Child = tooltipStack;
+
+        // Вертикальная линия
+        _verticalLine = new Line
+        {
+            Stroke = new SolidColorBrush(Color.FromRgb(255, 255, 255), 0.2),
+            StrokeThickness = 1,
+            IsVisible = false,
+            ZIndex = 50
+        };
+
+        // Точка при наведении (без DropShadowEffect)
+        _hoverDot = new Ellipse
+        {
+            Width = 12,
+            Height = 12,
+            Fill = LineBrush,
+            Stroke = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+            StrokeThickness = 2.5,
+            IsVisible = false,
+            ZIndex = 60
+        };
 
         var grid = new Grid();
         grid.Children.Add(_chartCanvas);
+        grid.Children.Add(_verticalLine);
+        grid.Children.Add(_hoverDot);
         grid.Children.Add(_tooltipBorder);
 
         Content = grid;
@@ -125,6 +175,7 @@ public partial class SimpleLineChart : UserControl
             if (canvas == null) return;
 
             canvas.Children.Clear();
+            _points.Clear();
 
             if (Data == null || Data.Count < 2) return;
 
@@ -136,8 +187,8 @@ public partial class SimpleLineChart : UserControl
             var max = MaxValue > 0 ? MaxValue : 100;
             var stepX = width / (Data.Count - 1);
 
-            // Сетка
-            var gridColor = new SolidColorBrush(Color.FromRgb(50, 50, 70));
+            // Улучшенная сетка
+            var gridColor = new SolidColorBrush(Color.FromRgb(60, 60, 80));
             for (int i = 0; i <= 4; i++)
             {
                 var y = (height / 4) * i;
@@ -152,7 +203,6 @@ public partial class SimpleLineChart : UserControl
             }
 
             // Точки
-            var points = new List<Point>();
             for (int i = 0; i < Data.Count; i++)
             {
                 var x = i * stepX;
@@ -160,11 +210,11 @@ public partial class SimpleLineChart : UserControl
                 if (value < 0) value = 0;
                 if (value > max) value = max;
                 var y = height - (value / max) * height;
-                points.Add(new Point(x, y));
+                _points.Add(new Point(x, y));
             }
 
-            // Заливка
-            var fillPoints = new List<Point>(points);
+            // Градиентная заливка (исправленный синтаксис для Avalonia)
+            var fillPoints = new List<Point>(_points);
             fillPoints.Add(new Point(width, height));
             fillPoints.Add(new Point(0, height));
 
@@ -172,33 +222,42 @@ public partial class SimpleLineChart : UserControl
             var fillPolyline = new Polygon
             {
                 Points = new Points(fillPoints),
-                Fill = new SolidColorBrush(lineColor, 0.15),
+                Fill = new LinearGradientBrush
+                {
+                    StartPoint = new RelativePoint(0.5, 0, RelativeUnit.Relative),
+                    EndPoint = new RelativePoint(0.5, 1, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new GradientStop { Color = Color.FromArgb(80, lineColor.R, lineColor.G, lineColor.B), Offset = 0 },
+                        new GradientStop { Color = Color.FromArgb(10, lineColor.R, lineColor.G, lineColor.B), Offset = 1 }
+                    }
+                },
                 Stroke = null
             };
             canvas.Children.Add(fillPolyline);
 
-            // Линия
+            // Более толстая и яркая линия
             var polyline = new Polyline
             {
-                Points = new Points(points),
+                Points = new Points(_points),
                 Stroke = LineBrush,
-                StrokeThickness = 2
+                StrokeThickness = 3
             };
             canvas.Children.Add(polyline);
 
             // Последнее значение
-            if (points.Count > 0)
+            if (_points.Count > 0)
             {
                 var lastValue = Data[Data.Count - 1];
                 var valueText = new TextBlock
                 {
-                    Text = $"{lastValue:F0}%",
-                    FontSize = 12,
+                    Text = $"{lastValue:F1}%",
+                    FontSize = 13,
                     FontWeight = FontWeight.Bold,
                     Foreground = LineBrush
                 };
-                Canvas.SetLeft(valueText, width - 40);
-                Canvas.SetTop(valueText, points[points.Count - 1].Y - 20);
+                Canvas.SetLeft(valueText, width - 50);
+                Canvas.SetTop(valueText, _points[_points.Count - 1].Y - 25);
                 canvas.Children.Add(valueText);
             }
         }
@@ -210,13 +269,14 @@ public partial class SimpleLineChart : UserControl
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_chartCanvas == null || _tooltipBorder == null || _tooltipText == null || Data == null) return;
-        if (Data.Count < 2) return;
+        if (_chartCanvas == null || _tooltipBorder == null || _tooltipValue == null || _tooltipTime == null || Data == null) return;
+        if (Data.Count < 2 || _points.Count < 2) return;
 
         var pos = e.GetPosition(_chartCanvas);
         var width = _chartCanvas.Bounds.Width;
+        var height = _chartCanvas.Bounds.Height;
 
-        if (width <= 0) return;
+        if (width <= 0 || height <= 0) return;
 
         var stepX = width / (Data.Count - 1);
         var index = (int)Math.Round(pos.X / stepX);
@@ -224,15 +284,47 @@ public partial class SimpleLineChart : UserControl
         if (index < 0) index = 0;
         if (index >= Data.Count) index = Data.Count - 1;
 
+        if (index == _hoveredIndex) return;
+        _hoveredIndex = index;
+
         var value = Data[index];
-        _tooltipText.Text = $"{value:F1}%";
+        var secondsAgo = Data.Count - 1 - index;
+
+        // Вертикальная линия
+        if (_verticalLine != null)
+        {
+            var pointX = _points[index].X;
+            _verticalLine.StartPoint = new Point(pointX, 0);
+            _verticalLine.EndPoint = new Point(pointX, height);
+            _verticalLine.IsVisible = true;
+        }
+
+        // Точка
+        if (_hoverDot != null)
+        {
+            Canvas.SetLeft(_hoverDot, _points[index].X - 6);
+            Canvas.SetTop(_hoverDot, _points[index].Y - 6);
+            _hoverDot.IsVisible = true;
+        }
+
+        // Tooltip
+        _tooltipValue.Text = $"{value:F1}%";
+        _tooltipTime.Text = $"{secondsAgo} сек. назад";
         _tooltipBorder.IsVisible = true;
 
-        var tooltipX = pos.X + 10;
-        var tooltipY = pos.Y - 30;
+        // Позиция tooltip
+        var tooltipX = _points[index].X + 20;
+        var tooltipY = _points[index].Y - 50;
 
-        if (tooltipX + 80 > width) tooltipX = pos.X - 80;
-        if (tooltipY < 0) tooltipY = pos.Y + 10;
+        if (tooltipX + 100 > width)
+        {
+            tooltipX = _points[index].X - 115;
+        }
+
+        if (tooltipY < 0)
+        {
+            tooltipY = _points[index].Y + 20;
+        }
 
         Canvas.SetLeft(_tooltipBorder, tooltipX);
         Canvas.SetTop(_tooltipBorder, tooltipY);
@@ -240,8 +332,16 @@ public partial class SimpleLineChart : UserControl
 
     private void OnPointerExited(object? sender, PointerEventArgs e)
     {
+        _hoveredIndex = -1;
+
         if (_tooltipBorder != null)
             _tooltipBorder.IsVisible = false;
+
+        if (_verticalLine != null)
+            _verticalLine.IsVisible = false;
+
+        if (_hoverDot != null)
+            _hoverDot.IsVisible = false;
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)

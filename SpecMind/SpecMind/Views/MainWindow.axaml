@@ -735,20 +735,20 @@
                                            Foreground="{StaticResource SM.TextPrimary}" Margin="0,0,0,15"/>
 
                                 <ItemsControl ItemsSource="{Binding AvailableThemes}"
-              HorizontalAlignment="Stretch"
-              x:CompileBindings="False">
-    <ItemsControl.ItemTemplate>
-        <DataTemplate>
-            <Button Background="#1A1A1A"
-                    BorderBrush="{Binding AccentPrimary}"
-                    BorderThickness="2"
-                    CornerRadius="12"
-                    Padding="20"
-                    Margin="0,0,0,15"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left"
-                    Command="{Binding DataContext.ApplyThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                    CommandParameter="{Binding}">
+                                              HorizontalAlignment="Stretch"
+                                              x:CompileBindings="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Background="#1A1A1A"
+                                                    BorderBrush="{Binding AccentPrimary}"
+                                                    BorderThickness="2"
+                                                    CornerRadius="12"
+                                                    Padding="20"
+                                                    Margin="0,0,0,15"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left"
+                                                    Command="{Binding DataContext.ApplyThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}">
                                                 <Button.Styles>
                                                     <Style Selector="Button:pointerover">
                                                         <Setter Property="Background" Value="#2D2D2D"/>
@@ -930,6 +930,152 @@
                 </Grid>
             </Grid>
 
+<!-- ========== EXPORT ========== -->
+<ScrollViewer Grid.Column="0" IsVisible="{Binding IsExportVisible}">
+    <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Center" Margin="20">
+        
+        <!-- Заголовок -->
+        <TextBlock Text="📄 Экспорт отчёта" FontSize="28" FontWeight="Bold"
+                   Foreground="{StaticResource SM.TextHeading}" HorizontalAlignment="Center"
+                   Margin="0,0,0,10"/>
+
+<!-- Кнопка вернуться на главную -->
+<Button Background="{StaticResource SM.AccentPrimary}"
+        Foreground="White"
+        Padding="30,15"
+        MinWidth="650"
+        CornerRadius="12"
+        FontSize="14"
+        FontWeight="SemiBold"
+        HorizontalAlignment="Center"
+        Command="{Binding ShowDashboardCommand}">
+    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+        <TextBlock Text="Вернуться на главную"/>
+    </StackPanel>
+</Button>
+
+        <!-- Описание -->
+        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25">
+            <StackPanel Spacing="10">
+                <TextBlock Text="Выберите формат отчёта" FontSize="20" FontWeight="Bold"
+                           Foreground="{StaticResource SM.TextHeading}"/>
+                <TextBlock Text="Отчёт будет содержать полную информацию о вашем оборудовании"
+                           FontSize="14" Foreground="{StaticResource SM.TextPrimary}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+<!-- Форматы (все одинакового размера) -->
+<Grid ColumnDefinitions="*,*" RowDefinitions="*,*" Margin="0,0,0,20">
+    
+    <!-- TXT -->
+    <Button Grid.Row="0" Grid.Column="0" 
+            Background="{StaticResource SM.BackgroundSecondary}"
+            CornerRadius="12" Padding="25" Margin="0,0,7,7"
+            Height="180"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Command="{Binding ExportTxtCommand}">
+        <StackPanel Spacing="10" VerticalAlignment="Center">
+            <TextBlock Text="📄" FontSize="40" HorizontalAlignment="Center"/>
+            <TextBlock Text="TXT" FontSize="18" FontWeight="Bold"
+                       Foreground="{StaticResource SM.AccentPrimary}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Текстовый файл с красивым оформлением"
+                       FontSize="12" Foreground="{StaticResource SM.TextPrimary}" 
+                       TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
+    </Button>
+
+    <!-- JSON -->
+    <Button Grid.Row="0" Grid.Column="1" 
+            Background="{StaticResource SM.BackgroundSecondary}"
+            CornerRadius="12" Padding="25" Margin="8,0,0,7"
+            Height="180"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Command="{Binding ExportJsonCommand}">
+        <StackPanel Spacing="10" VerticalAlignment="Center">
+            <TextBlock Text="📋" FontSize="40" HorizontalAlignment="Center"/>
+            <TextBlock Text="JSON" FontSize="18" FontWeight="Bold"
+                       Foreground="{StaticResource SM.StatusWarning}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Структурированные данные для программ"
+                       FontSize="12" Foreground="{StaticResource SM.TextPrimary}" 
+                       TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
+    </Button>
+
+    <!-- CSV -->
+    <Button Grid.Row="1" Grid.Column="0" 
+            Background="{StaticResource SM.BackgroundSecondary}"
+            CornerRadius="12" Padding="25" Margin="0,7,7,0"
+            Height="180"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Command="{Binding ExportCsvCommand}">
+        <StackPanel Spacing="10" VerticalAlignment="Center">
+            <TextBlock Text="📊" FontSize="40" HorizontalAlignment="Center"/>
+            <TextBlock Text="CSV" FontSize="18" FontWeight="Bold"
+                       Foreground="{StaticResource SM.StatusGood}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Таблица для Excel и Google Sheets"
+                       FontSize="12" Foreground="{StaticResource SM.TextPrimary}" 
+                       TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
+    </Button>
+
+    <!-- HTML -->
+    <Button Grid.Row="1" Grid.Column="1" 
+            Background="{StaticResource SM.BackgroundSecondary}"
+            CornerRadius="12" Padding="25" Margin="8,7,0,0"
+            Height="180"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Command="{Binding ExportHtmlCommand}">
+        <StackPanel Spacing="10" VerticalAlignment="Center">
+            <TextBlock Text="🌐" FontSize="40" HorizontalAlignment="Center"/>
+            <TextBlock Text="HTML" FontSize="18" FontWeight="Bold"
+                       Foreground="{StaticResource SM.StatusCritical}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Красивая веб-страница для браузера"
+                       FontSize="12" Foreground="{StaticResource SM.TextPrimary}" 
+                       TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
+    </Button>
+</Grid>
+
+        <!-- Что включено -->
+        <Border Background="{StaticResource SM.BackgroundSecondary}" CornerRadius="12" Padding="25">
+            <StackPanel Spacing="10">
+                <TextBlock Text=" Что будет включено в отчёт:" FontSize="16" FontWeight="Bold"
+                           Foreground="{StaticResource SM.TextHeading}"/>
+                
+                <StackPanel Spacing="5">
+                    <TextBlock Text="✅ Процессор (название, ядра, частоты, кэш, архитектура)" 
+                               FontSize="13" Foreground="{StaticResource SM.TextPrimary}"/>
+                    <TextBlock Text="✅ Видеокарта (VRAM, CUDA cores, TDP, драйвер)" 
+                               FontSize="13" Foreground="{StaticResource SM.TextPrimary}"/>
+                    <TextBlock Text="✅ Оперативная память (объём, тип, частота, слоты)" 
+                               FontSize="13" Foreground="{StaticResource SM.TextPrimary}"/>
+                    <TextBlock Text="✅ Накопители (тип, объём, интерфейс, S/N)" 
+                               FontSize="13" Foreground="{StaticResource SM.TextPrimary}"/>
+                    <TextBlock Text="✅ Материнская плата (производитель, модель, BIOS, чипсет)" 
+                               FontSize="13" Foreground="{StaticResource SM.TextPrimary}"/>
+                    <TextBlock Text="✅ Текущие показатели (температуры, загрузка)" 
+                               FontSize="13" Foreground="{StaticResource SM.TextPrimary}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</ScrollViewer>
+
+
+
             <!-- ========== БОКОВАЯ ПАНЕЛЬ ========== -->
             <StackPanel Grid.Column="1" Spacing="15" Margin="20,0,0,0">
                 <Button Content="📄 Экспортировать отчёт"
@@ -940,7 +1086,7 @@
                         FontSize="14"
                         FontWeight="SemiBold"
                         HorizontalAlignment="Stretch"
-                        Command="{Binding ExportReportCommand}"/>
+                        Command="{Binding ShowExportCommand}"/>
                 
                 <Button Content="Детальная информация"
                         Background="Transparent"
