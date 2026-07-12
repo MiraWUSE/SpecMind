@@ -2,6 +2,7 @@
 using SpecMind.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management;
 using System.Threading.Tasks;
 
@@ -26,6 +27,7 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             Ram = GetRamInfo(),
             Storages = GetStorageInfo(),
             Motherboard = GetMotherboardInfo(),
+            Monitors = GetMonitorInfo(),
             Sensors = GetSensorData()
         };
 
@@ -676,6 +678,98 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
         }
         catch { }
         return "Unknown";
+    }
+
+
+    private List<MonitorInfo> GetMonitorInfo()
+    {
+        var monitors = new List<MonitorInfo>();
+
+        // Получаем информацию о мониторах через WMI (root\wmi)
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(@"root\wmi", "SELECT * FROM WmiMonitorID");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                var monitor = new MonitorInfo
+                {
+                    Manufacturer = GetMonitorString(obj["ManufacturerName"]),
+                    Model = GetMonitorString(obj["UserFriendlyName"]),
+                    SerialNumber = GetMonitorString(obj["SerialNumberID"]),
+                    IsActive = true
+                };
+                monitors.Add(monitor);
+            }
+        }
+        catch { }
+
+        // Получаем тип подключения
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(@"root\wmi", "SELECT * FROM WmiMonitorConnectionParams");
+            int i = 0;
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                if (i < monitors.Count)
+                {
+                    var connectionType = Convert.ToInt32(obj["VideoOutputTechnology"]);
+                    monitors[i].ConnectionType = connectionType switch
+                    {
+                        1 => "VGA",
+                        5 => "DVI",
+                        6 => "HDMI",
+                        8 => "DisplayPort",
+                        7 => "LVDS (встроенный)",
+                        9 => "SDI",
+                        10 => "USB-C / Thunderbolt",
+                        _ => $"Type {connectionType}"
+                    };
+                }
+                i++;
+            }
+        }
+        catch { }
+
+        // Получаем разрешение и частоту обновления
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate FROM Win32_VideoController");
+            int i = 0;
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                if (i < monitors.Count)
+                {
+                    var hRes = obj["CurrentHorizontalResolution"]?.ToString() ?? "?";
+                    var vRes = obj["CurrentVerticalResolution"]?.ToString() ?? "?";
+                    var refresh = obj["CurrentRefreshRate"]?.ToString() ?? "?";
+                    monitors[i].Resolution = $"{hRes} x {vRes}";
+                    monitors[i].RefreshRate = $"{refresh} Hz";
+                }
+                i++;
+            }
+        }
+        catch { }
+
+        // Если не удалось получить разрешение — ставим заглушку
+        foreach (var m in monitors)
+        {
+            if (string.IsNullOrEmpty(m.Resolution)) m.Resolution = "Unknown";
+            if (string.IsNullOrEmpty(m.RefreshRate)) m.RefreshRate = "Unknown";
+            if (string.IsNullOrEmpty(m.ConnectionType)) m.ConnectionType = "Unknown";
+            if (string.IsNullOrEmpty(m.Name)) m.Name = $"{m.Manufacturer} {m.Model}";
+        }
+
+        return monitors;
+    }
+
+    private string GetMonitorString(object value)
+    {
+        if (value is ushort[] chars)
+        {
+            var str = new string(chars.Select(c => (char)c).ToArray());
+            return str.TrimEnd('\0').Trim();
+        }
+        return value?.ToString() ?? "Unknown";
     }
 
     public void Dispose()

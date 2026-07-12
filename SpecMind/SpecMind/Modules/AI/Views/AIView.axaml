@@ -1,0 +1,108 @@
+﻿<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:SpecMind.Modules.AI.ViewModels"
+    x:Class="SpecMind.Views.AIView"
+    x:DataType="vm:AIViewModel"
+    mc:Ignorable="d">
+
+    <Grid Margin="20">
+
+        <Grid.RowDefinitions>
+
+            <RowDefinition Height="Auto"/>
+
+            <RowDefinition Height="*"/>
+
+            <RowDefinition Height="Auto"/>
+
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+
+        <StackPanel>
+
+            <TextBlock
+                Text="SpecMind AI"
+                FontSize="28"
+                FontWeight="Bold"/>
+
+            <TextBlock
+                Margin="0,5,0,20"
+                Text="Ваш персональный AI-помощник по компьютерному железу"
+                Opacity="0.6"/>
+
+        </StackPanel>
+
+        <!-- История -->
+
+        <Border
+            Grid.Row="1"
+            CornerRadius="12"
+            Padding="15">
+
+            <ScrollViewer>
+
+                <ItemsControl ItemsSource="{Binding Memory.Messages}">
+
+    <ItemsControl.ItemTemplate>
+
+        <DataTemplate>
+
+            <Border Margin="0,0,0,12">
+
+                <StackPanel>
+
+                    <TextBlock
+                        FontWeight="Bold"
+                        Text="{Binding Sender}" />
+
+                    <TextBlock
+                        TextWrapping="Wrap"
+                        Text="{Binding Message}" />
+
+                </StackPanel>
+
+            </Border>
+
+        </DataTemplate>
+
+    </ItemsControl.ItemTemplate>
+
+</ItemsControl>
+
+            </ScrollViewer>
+
+        </Border>
+
+        <!-- Нижняя панель -->
+
+        <Grid
+            Grid.Row="2"
+            Margin="0,15,0,0">
+
+            <Grid.ColumnDefinitions>
+
+                <ColumnDefinition/>
+
+                <ColumnDefinition Width="Auto"/>
+
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                Text="{Binding UserMessage}"
+                Watermark="Введите сообщение..." />
+
+            <Button
+                Grid.Column="1"
+                Margin="10,0,0,0"
+                Content="Отправить"
+                Command="{Binding SendCommand}" />
+
+        </Grid>
+
+    </Grid>
+
+</UserControl>

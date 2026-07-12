@@ -11,6 +11,8 @@ public class HardwareInfo
     public List<StorageInfo> Storages { get; set; } = new();
     public SensorData Sensors { get; set; } = new();
     public string DeviceType { get; set; } = "Desktop";
+
+    public List<MonitorInfo> Monitors { get; set; } = new();
 }
 
 public class CpuInfo
@@ -96,4 +98,16 @@ public class SensorData
     public int GpuFanSpeed { get; set; }
     public double RamUsage { get; set; }
     public List<FanInfo> SystemFans { get; set; } = new();
+}
+
+public class MonitorInfo
+{
+    public string Name { get; set; } = "";
+    public string Manufacturer { get; set; } = "";
+    public string Model { get; set; } = "";
+    public string SerialNumber { get; set; } = "";
+    public string Resolution { get; set; } = "";
+    public string RefreshRate { get; set; } = "";
+    public string ConnectionType { get; set; } = "";
+    public bool IsActive { get; set; }
 }

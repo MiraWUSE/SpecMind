@@ -1,23 +1,16 @@
-﻿using Avalonia.Threading;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Avalonia.Threading;
 using SpecMind.Models;
-using SpecMind.Modules.AI.ViewModels;
 using SpecMind.Services;
-using SpecMind.ViewModels.Pages;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-namespace SpecMind.ViewModels;
+namespace SpecMind.ViewModels.Pages;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MonitoringViewModel : ViewModelBase
 {
-    private readonly IHardwareScannerService _scanner;
-
-    private DispatcherTimer? _monitoringTimer;
-
-    private const int MaxDataPoints = 60;
+    private readonly IHardwareScannerService _scanner = new HardwareScannerService();
 
     [ObservableProperty]
     private HardwareInfo hardwareInfo = new();
@@ -34,17 +27,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<double> gpuTempData = new();
 
-    [ObservableProperty]
-    private ViewModelBase currentPage = null!;
+    private DispatcherTimer? _monitoringTimer;
 
-    public MainWindowViewModel()
+    private const int MaxDataPoints = 60;
+
+    public MonitoringViewModel()
     {
-        _scanner = new HardwareScannerService();
-
-        CurrentPage = new DashboardViewModel(this);
-
-        LoadHardwareData();
-
         _monitoringTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1)
@@ -56,51 +44,6 @@ public partial class MainWindowViewModel : ViewModelBase
         };
 
         _monitoringTimer.Start();
-    }
-
-    #region Navigation
-
-    [RelayCommand]
-    private void ShowDashboard()
-    {
-        CurrentPage = new DashboardViewModel(this);
-    }
-
-    [RelayCommand]
-    private void ShowDetailed()
-    {
-        CurrentPage = new DetailedViewModel(this);
-    }
-
-    [RelayCommand]
-    private void ShowMonitoring()
-    {
-        CurrentPage = new MonitoringViewModel(this);
-    }
-
-    [RelayCommand]
-    private void ShowSettings()
-    {
-        CurrentPage = new SettingsViewModel(this);
-    }
-
-    [RelayCommand]
-    private void ShowExport()
-    {
-        CurrentPage = new ExportViewModel(this);
-    }
-
-    [RelayCommand]
-    private void ShowAI()
-    {
-        CurrentPage = new AIViewModel(this);
-    }
-
-    #endregion
-
-    private async void LoadHardwareData()
-    {
-        HardwareInfo = await _scanner.GetHardwareInfoAsync();
     }
 
     private async Task UpdateMonitoringData()
@@ -131,5 +74,15 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine(ex);
         }
+    }
+
+    public void StartMonitoring()
+    {
+        _monitoringTimer?.Start();
+    }
+
+    public void StopMonitoring()
+    {
+        _monitoringTimer?.Stop();
     }
 }

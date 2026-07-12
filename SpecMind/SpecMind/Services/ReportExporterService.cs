@@ -100,6 +100,23 @@ public class ReportExporterService
         sb.AppendLine($"  Serial Number:   {info.Motherboard.SerialNumber}");
         sb.AppendLine();
 
+        // Monitors
+        sb.AppendLine("──────────────────────────────────────────────────────────────────┐");
+        sb.AppendLine("│  МОНИТОРЫ (MONITORS)                                              │");
+        sb.AppendLine("└──────────────────────────────────────────────────────────────────");
+        foreach (var monitor in info.Monitors)
+        {
+            sb.AppendLine($"   {monitor.Name}");
+            sb.AppendLine($"  │  Производитель:  {monitor.Manufacturer}");
+            sb.AppendLine($"  │  Модель:         {monitor.Model}");
+            sb.AppendLine($"  │  Разрешение:     {monitor.Resolution}");
+            sb.AppendLine($"  │  Частота:        {monitor.RefreshRate}");
+            sb.AppendLine($"  │  Подключение:    {monitor.ConnectionType}");
+            sb.AppendLine($"  │  S/N:            {monitor.SerialNumber}");
+            sb.AppendLine($"  └─────────────────────────────────────────");
+            sb.AppendLine();
+        }
+
         // Футер
         sb.AppendLine("════════════════════════════════════════════════════════════════════");
         sb.AppendLine("  Отчёт создан SpecMind - https://github.com/MiraWuse/SpecMind");

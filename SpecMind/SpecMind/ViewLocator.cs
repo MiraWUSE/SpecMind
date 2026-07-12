@@ -1,38 +1,33 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using SpecMind.ViewModels;
 
-namespace SpecMind
+namespace SpecMind;
+
+public class ViewLocator : IDataTemplate
 {
-    /// <summary>
-    /// Given a view model, returns the corresponding view if possible.
-    /// </summary>
-    [RequiresUnreferencedCode(
-        "Default implementation of ViewLocator involves reflection which may be trimmed away.",
-        Url = "https://docs.avaloniaui.net/docs/concepts/view-locator")]
-    public class ViewLocator : IDataTemplate
+    public Control? Build(object? data)
     {
-        public Control? Build(object? param)
-        {
-            if (param is null)
-                return null;
+        if (data == null)
+            return null;
 
-            var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
-            var type = Type.GetType(name);
+        var name = data.GetType().FullName!
+            .Replace("ViewModel", "View")
+            .Replace("ViewModels", "Views");
 
-            if (type != null)
+        var type = Type.GetType(name);
+
+        if (type == null)
+            return new TextBlock
             {
-                return (Control)Activator.CreateInstance(type)!;
-            }
+                Text = $"View not found:\n{name}"
+            };
 
-            return new TextBlock { Text = "Not Found: " + name };
-        }
+        return (Control)Activator.CreateInstance(type)!;
+    }
 
-        public bool Match(object? data)
-        {
-            return data is ViewModelBase;
-        }
+    public bool Match(object? data)
+    {
+        return data is ViewModelBase;
     }
 }

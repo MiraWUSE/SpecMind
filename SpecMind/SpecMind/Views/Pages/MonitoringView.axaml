@@ -1,0 +1,74 @@
+﻿<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SpecMind.Controls"
+    x:Class="SpecMind.Views.Pages.MonitoringView">
+
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ================= CPU ================= -->
+
+        <Border Grid.Row="0"
+                Margin="0,0,0,10"
+                Padding="20"
+                CornerRadius="12"
+                Background="{StaticResource SM.BackgroundSecondary}">
+
+            <Grid RowDefinitions="Auto,*">
+
+                <TextBlock
+                    Grid.Row="0"
+                    Text="📈 Загрузка процессора"
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource SM.TextHeading}"
+                    Margin="0,0,0,15"/>
+
+                <local:SimpleLineChart
+                    Grid.Row="1"
+                    Data="{Binding CpuUsageData}"
+                    LineBrush="{StaticResource SM.AccentPrimary}"
+                    MaxValue="100"
+                    Height="220"/>
+
+            </Grid>
+
+        </Border>
+
+        <!-- ================= GPU ================= -->
+
+        <Border Grid.Row="1"
+                Margin="0,10,0,0"
+                Padding="20"
+                CornerRadius="12"
+                Background="{StaticResource SM.BackgroundSecondary}">
+
+            <Grid RowDefinitions="Auto,*">
+
+                <TextBlock
+                    Grid.Row="0"
+                    Text="🎮 Загрузка видеокарты"
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource SM.TextHeading}"
+                    Margin="0,0,0,15"/>
+
+                <local:SimpleLineChart
+                    Grid.Row="1"
+                    Data="{Binding GpuUsageData}"
+                    LineBrush="{StaticResource SM.StatusWarning}"
+                    MaxValue="100"
+                    Height="220"/>
+
+            </Grid>
+
+        </Border>
+
+    </Grid>
+
+</UserControl>
