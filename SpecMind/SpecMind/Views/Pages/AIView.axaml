@@ -1,0 +1,91 @@
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:SpecMind.Modules.AI.Models"
+    x:Class="SpecMind.Views.Pages.AIView">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- История сообщений -->
+        <Border
+            Background="{StaticResource SM.BackgroundSecondary}"
+            CornerRadius="12"
+            Padding="15"
+            Margin="0,0,0,15">
+
+            <ScrollViewer>
+
+                <ItemsControl ItemsSource="{Binding Memory.Messages}">
+
+                    <ItemsControl.ItemTemplate>
+
+                        <DataTemplate>
+
+                            <Border
+                                Margin="0,0,0,12"
+                                Padding="12"
+                                CornerRadius="10">
+
+                                <Border.Styles>
+
+                                    <Style Selector="Border">
+
+                                        <Setter Property="Background"
+                                                Value="{StaticResource SM.BackgroundPrimary}"/>
+
+                                    </Style>
+
+                                </Border.Styles>
+
+                                <StackPanel>
+
+                                    <TextBlock
+                                        FontWeight="Bold"
+                                        Margin="0,0,0,6">
+
+                                        <Run Text="{Binding IsUser,
+                                            Converter={x:Static BooleanToTextConverter.Instance}}"/>
+
+                                    </TextBlock>
+
+                                    <TextBlock
+                                        Text="{Binding Message}"
+                                        TextWrapping="Wrap"/>
+
+                                </StackPanel>
+
+                            </Border>
+
+                        </DataTemplate>
+
+                    </ItemsControl.ItemTemplate>
+
+                </ItemsControl>
+
+            </ScrollViewer>
+
+        </Border>
+
+        <!-- Панель ввода -->
+        <Grid
+            Grid.Row="1"
+            ColumnDefinitions="*,Auto">
+
+            <TextBox
+                Grid.Column="0"
+                Text="{Binding UserMessage}"
+                Watermark="Введите вопрос..."
+                AcceptsReturn="True"
+                MinHeight="45"/>
+
+            <Button
+                Grid.Column="1"
+                Margin="10,0,0,0"
+                Content="Отправить"
+                Command="{Binding SendCommand}"/>
+
+        </Grid>
+
+    </Grid>
+
+</UserControl>

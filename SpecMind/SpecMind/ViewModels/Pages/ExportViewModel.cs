@@ -12,12 +12,11 @@ namespace SpecMind.ViewModels.Pages;
 
 public partial class ExportViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    private HardwareInfo hardwareInfo = new();
+    private readonly MainWindowViewModel _main;
 
-    public void SetHardwareInfo(HardwareInfo info)
+    public ExportViewModel(MainWindowViewModel main)
     {
-        HardwareInfo = info;
+        _main = main;
     }
 
     [RelayCommand]
@@ -63,8 +62,7 @@ public partial class ExportViewModel : ViewModelBase
     {
         try
         {
-            if (Application.Current?.ApplicationLifetime
-                is not IClassicDesktopStyleApplicationLifetime desktop)
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
                 return;
 
             var window = desktop.MainWindow;
@@ -97,7 +95,7 @@ public partial class ExportViewModel : ViewModelBase
             if (file == null)
                 return;
 
-            await exporter(HardwareInfo, file.Path.LocalPath);
+            await exporter(_main.HardwareInfo, file.Path.LocalPath);
         }
         catch (Exception ex)
         {

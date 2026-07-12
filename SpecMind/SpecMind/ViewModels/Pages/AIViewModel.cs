@@ -2,10 +2,11 @@
 using CommunityToolkit.Mvvm.Input;
 using SpecMind.Modules.AI.Runtime;
 using SpecMind.Modules.AI.Services;
+using SpecMind.ViewModels;
 
 namespace SpecMind.Modules.AI.ViewModels;
 
-public partial class AIViewModel : ObservableObject
+public partial class AIViewModel : ViewModelBase
 {
     private readonly AIService _aiService;
 

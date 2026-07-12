@@ -21,8 +21,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void LoadThemes()
     {
-        AvailableThemes = new ObservableCollection<AppTheme>(
-            ThemeService.GetAvailableThemes());
+        AvailableThemes =
+            new ObservableCollection<AppTheme>(
+                ThemeService.GetAvailableThemes());
     }
 
     [RelayCommand]
@@ -34,14 +35,17 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyTheme(AppTheme theme)
     {
-        if (theme != null)
-            ThemeService.ApplyTheme(theme);
+        if (theme == null)
+            return;
+
+        ThemeService.ApplyTheme(theme);
     }
 
     [RelayCommand]
     private void ApplyRandomTheme()
     {
-        ThemeService.ApplyTheme(
-            ThemeService.GenerateRandomTheme());
+        var randomTheme = ThemeService.GenerateRandomTheme();
+
+        ThemeService.ApplyTheme(randomTheme);
     }
 }
