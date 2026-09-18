@@ -1,12 +1,16 @@
-﻿<UserControl
+<UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:SpecMind.ViewModels"
+    xmlns:pagevm="using:SpecMind.ViewModels.Pages"
+    xmlns:data="using:SpecMind.Models"
+    x:DataType="pagevm:SettingsViewModel"
     x:Class="SpecMind.Views.Pages.SettingsView">
 
 
 
 <!-- ========== SETTINGS ========== -->
-            <Grid Grid.Column="0" IsVisible="{Binding IsSettingsVisible}">
+            <Grid Grid.Column="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="250"/>
                     <ColumnDefinition Width="*"/>
@@ -103,10 +107,9 @@
                                            Foreground="{StaticResource SM.TextPrimary}" Margin="0,0,0,15"/>
 
                                 <ItemsControl ItemsSource="{Binding AvailableThemes}"
-                                              HorizontalAlignment="Stretch"
-                                              x:CompileBindings="False">
+                                              HorizontalAlignment="Stretch">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="data:AppTheme">
                                             <Button Background="#1A1A1A"
                                                     BorderBrush="{Binding AccentPrimary}"
                                                     BorderThickness="2"
@@ -115,7 +118,7 @@
                                                     Margin="0,0,0,15"
                                                     HorizontalAlignment="Stretch"
                                                     HorizontalContentAlignment="Left"
-                                                    Command="{Binding DataContext.ApplyThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Command="{Binding $parent[UserControl].((pagevm:SettingsViewModel)DataContext).ApplyThemeCommand}"
                                                     CommandParameter="{Binding}">
                                                 <Button.Styles>
                                                     <Style Selector="Button:pointerover">

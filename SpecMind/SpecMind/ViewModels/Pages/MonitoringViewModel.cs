@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Avalonia.Threading;
 using SpecMind.Models;
-using SpecMind.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -10,10 +9,7 @@ namespace SpecMind.ViewModels.Pages;
 
 public partial class MonitoringViewModel : ViewModelBase
 {
-    private readonly IHardwareScannerService _scanner = new HardwareScannerService();
-
-    [ObservableProperty]
-    private HardwareInfo hardwareInfo = new();
+    private readonly MainWindowViewModel _main;
 
     [ObservableProperty]
     private ObservableCollection<double> cpuUsageData = new();
@@ -28,31 +24,30 @@ public partial class MonitoringViewModel : ViewModelBase
     private ObservableCollection<double> gpuTempData = new();
 
     private DispatcherTimer? _monitoringTimer;
-
     private const int MaxDataPoints = 60;
 
-    public MonitoringViewModel()
+    public MonitoringViewModel(MainWindowViewModel main)
     {
+        _main = main;
+
         _monitoringTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1)
         };
 
-        _monitoringTimer.Tick += async (_, _) =>
-        {
-            await UpdateMonitoringData();
-        };
+        _monitoringTimer.Tick += (_, _) => UpdateMonitoringData(); // ← Убран async/await здесь, так как метод теперь синхронный
 
         _monitoringTimer.Start();
     }
 
-    private async Task UpdateMonitoringData()
+    public HardwareInfo HardwareInfo => _main.HardwareInfo;
+
+    private void UpdateMonitoringData() // ← Метод стал синхронным
     {
         try
         {
-            var info = await _scanner.GetHardwareInfoAsync();
-
-            HardwareInfo = info;
+            // Читаем свойство напрямую, без await, так как оно уже обновляется в MainWindowViewModel
+            var info = _main.HardwareInfo;
 
             CpuUsageData.Add(info.Sensors.CpuUsage);
             if (CpuUsageData.Count > MaxDataPoints)
@@ -74,15 +69,5 @@ public partial class MonitoringViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine(ex);
         }
-    }
-
-    public void StartMonitoring()
-    {
-        _monitoringTimer?.Start();
-    }
-
-    public void StopMonitoring()
-    {
-        _monitoringTimer?.Stop();
     }
 }

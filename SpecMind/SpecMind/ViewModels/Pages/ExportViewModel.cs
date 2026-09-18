@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -13,6 +13,8 @@ namespace SpecMind.ViewModels.Pages;
 public partial class ExportViewModel : ViewModelBase
 {
     private readonly MainWindowViewModel _main;
+
+    public System.Windows.Input.ICommand ShowDashboardCommand => _main.ShowDashboardCommand;
 
     public ExportViewModel(MainWindowViewModel main)
     {

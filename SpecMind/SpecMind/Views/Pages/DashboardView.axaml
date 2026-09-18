@@ -1,7 +1,10 @@
-﻿<UserControl
+<UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:SpecMind.Controls"
+    xmlns:local="using:SpecMind.Views"
+    xmlns:pagevm="using:SpecMind.ViewModels.Pages"
+    xmlns:data="using:SpecMind.Models"
+    x:DataType="pagevm:DashboardViewModel"
     x:Class="SpecMind.Views.Pages.DashboardView">
 
 
@@ -155,7 +158,7 @@
                                 
                                 <ItemsControl ItemsSource="{Binding HardwareInfo.Storages}">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="data:StorageInfo">
                                             <Border Background="{StaticResource SM.BackgroundPrimary}" 
                                                     CornerRadius="8" Padding="15" Margin="0,0,0,10">
                                                 <Grid ColumnDefinitions="*,Auto">

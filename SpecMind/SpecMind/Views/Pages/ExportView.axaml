@@ -1,7 +1,10 @@
-﻿
+
 <UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:pagevm="using:SpecMind.ViewModels.Pages"
+    xmlns:data="using:SpecMind.Models"
+    x:DataType="pagevm:ExportViewModel"
     x:Class="SpecMind.Views.Pages.ExportView">
 
 

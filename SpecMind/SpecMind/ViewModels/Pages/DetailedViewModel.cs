@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SpecMind.Models;
 using SpecMind.Services;
 
@@ -6,19 +6,14 @@ namespace SpecMind.ViewModels.Pages;
 
 public partial class DetailedViewModel : ViewModelBase
 {
-    private readonly IHardwareScannerService _scanner =
-        new HardwareScannerService();
+    private readonly MainWindowViewModel _main;
 
-    [ObservableProperty]
-    private HardwareInfo hardwareInfo = new();
+    public System.Windows.Input.ICommand ShowDashboardCommand => _main.ShowDashboardCommand;
 
-    public DetailedViewModel()
+    public DetailedViewModel(MainWindowViewModel main)
     {
-        LoadHardwareData();
+        _main = main;
     }
 
-    private async void LoadHardwareData()
-    {
-        HardwareInfo = await _scanner.GetHardwareInfoAsync();
-    }
+    public HardwareInfo HardwareInfo => _main.HardwareInfo;
 }

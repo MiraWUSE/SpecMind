@@ -1,91 +1,41 @@
-<UserControl
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:models="using:SpecMind.Modules.AI.Models"
-    x:Class="SpecMind.Views.Pages.AIView">
-
-    <Grid RowDefinitions="*,Auto">
-
-        <!-- ������� ��������� -->
-        <Border
-            Background="{StaticResource SM.BackgroundSecondary}"
-            CornerRadius="12"
-            Padding="15"
-            Margin="0,0,0,15">
-
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SpecMind.Modules.AI.ViewModels"
+             xmlns:models="using:SpecMind.Modules.AI.Models"
+             x:Class="SpecMind.Views.Pages.AIView"
+             x:DataType="vm:AIViewModel">
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+        <TextBlock Text="Локальная модель пока не подключена. Чат работает в демонстрационном режиме."
+                   TextWrapping="Wrap" Margin="0,0,0,12"
+                   Foreground="{StaticResource SM.TextPrimary}"/>
+        <Border Grid.Row="1" Background="{StaticResource SM.BackgroundSecondary}"
+                CornerRadius="12" Padding="15" Margin="0,0,0,15">
             <ScrollViewer>
-
                 <ItemsControl ItemsSource="{Binding Memory.Messages}">
-
                     <ItemsControl.ItemTemplate>
-
-                        <DataTemplate>
-
-                            <Border
-                                Margin="0,0,0,12"
-                                Padding="12"
-                                CornerRadius="10">
-
-                                <Border.Styles>
-
-                                    <Style Selector="Border">
-
-                                        <Setter Property="Background"
-                                                Value="{StaticResource SM.BackgroundPrimary}"/>
-
-                                    </Style>
-
-                                </Border.Styles>
-
-                                <StackPanel>
-
-                                    <TextBlock
-                                        FontWeight="Bold"
-                                        Margin="0,0,0,6">
-
-                                        <Run Text="{Binding IsUser,
-                                            Converter={x:Static BooleanToTextConverter.Instance}}"/>
-
-                                    </TextBlock>
-
-                                    <TextBlock
-                                        Text="{Binding Message}"
-                                        TextWrapping="Wrap"/>
-
+                        <DataTemplate x:DataType="models:ChatMessage">
+                            <Border Margin="0,0,0,12" Padding="12" CornerRadius="10"
+                                    Background="{StaticResource SM.BackgroundPrimary}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{Binding Sender}" FontWeight="Bold"
+                                               Foreground="{StaticResource SM.TextHeading}"/>
+                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource SM.TextPrimary}"/>
                                 </StackPanel>
-
                             </Border>
-
                         </DataTemplate>
-
                     </ItemsControl.ItemTemplate>
-
                 </ItemsControl>
-
             </ScrollViewer>
-
         </Border>
-
-        <!-- ������ ����� -->
-        <Grid
-            Grid.Row="1"
-            ColumnDefinitions="*,Auto">
-
-            <TextBox
-                Grid.Column="0"
-                Text="{Binding UserMessage}"
-                Watermark="������� ������..."
-                AcceptsReturn="True"
-                MinHeight="45"/>
-
-            <Button
-                Grid.Column="1"
-                Margin="10,0,0,0"
-                Content="���������"
-                Command="{Binding SendCommand}"/>
-
+        <TextBlock Grid.Row="2" Text="Подготовка демонстрационного ответа…"
+                   IsVisible="{Binding IsBusy}" Margin="0,0,0,8"
+                   Foreground="{StaticResource SM.TextPrimary}"/>
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+            <TextBox Text="{Binding UserMessage}" Watermark="Введите вопрос…"
+                     AcceptsReturn="True" MinHeight="45" IsEnabled="{Binding !IsBusy}"/>
+            <Button Grid.Column="1" Margin="10,0,0,0" Content="Отправить"
+                    Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}"/>
         </Grid>
-
     </Grid>
-
 </UserControl>

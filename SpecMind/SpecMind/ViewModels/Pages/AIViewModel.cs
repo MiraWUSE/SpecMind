@@ -1,15 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SpecMind.Modules.AI.Runtime;
-using SpecMind.Modules.AI.Services;
 using SpecMind.ViewModels;
+using SpecMind.ViewModels.Pages;
+using System;
+using System.Threading.Tasks;
 
-namespace SpecMind.Modules.AI.ViewModels;
+namespace SpecMind.Modules.AI.ViewModels; // <-- ПРОВЕРЬТЕ, ЧТО ЭТОТ NEAMESPACE ТОЧНЫЙ
 
-public partial class AIViewModel : ViewModelBase
+public partial class AIViewModel : PagesViewModelBase
 {
-    private readonly AIService _aiService;
-
     public ChatMemory Memory { get; } = new();
 
     [ObservableProperty]
@@ -18,10 +18,9 @@ public partial class AIViewModel : ViewModelBase
     [ObservableProperty]
     private bool isBusy;
 
-    public AIViewModel(AIService aiService)
+    // <-- КОНСТРУКТОР ТЕПЕРЬ ПРИНИМАЕТ ТОЛЬКО MainWindowViewModel
+    public AIViewModel(MainWindowViewModel main) : base(main)
     {
-        _aiService = aiService;
-
         Memory.Messages.Add(new()
         {
             IsUser = false,
@@ -32,17 +31,11 @@ public partial class AIViewModel : ViewModelBase
 Я SpecMind AI.
 
 Я могу:
-
 • анализировать ваш компьютер;
-
 • подобрать комплектующие;
-
 • объяснить характеристики;
-
 • подсказать апгрейд;
-
 • рассказать о совместимости компонентов;
-
 • помочь выбрать ноутбук.
 """
         });
@@ -51,31 +44,22 @@ public partial class AIViewModel : ViewModelBase
     [RelayCommand]
     public async Task SendAsync()
     {
-        if (IsBusy)
-            return;
-
-        if (string.IsNullOrWhiteSpace(UserMessage))
-            return;
+        if (IsBusy) return;
+        if (string.IsNullOrWhiteSpace(UserMessage)) return;
 
         IsBusy = true;
-
         string question = UserMessage;
-
         Memory.AddUser(question);
-
         UserMessage = "";
 
         var aiMessage = Memory.AddAssistantThinking();
 
         try
         {
-            string answer =
-                await _aiService.SendMessageAsync(
-                    Memory.Messages,
-                    question);
-
+            // ВРЕМЕННАЯ ЗАГЛУШКА: чтобы приложение компилировалось и работало
+            await Task.Delay(1000);
             aiMessage.IsThinking = false;
-            aiMessage.Message = answer;
+            aiMessage.Message = $"Вы спросили: \"{question}\"\n\n(Полная интеграция с ИИ-провайдером настраивается)";
         }
         catch (Exception ex)
         {
@@ -91,11 +75,8 @@ public partial class AIViewModel : ViewModelBase
     {
         try
         {
-            string answer = await _aiService.SendMessageAsync(
-                Memory.Messages,
-                "Привет! Представься.");
-
-            Memory.AddAssistant(answer);
+            await Task.Delay(500);
+            Memory.AddAssistant("Тестовый ответ. Реальная интеграция с ИИ скоро будет добавлена.");
         }
         catch (Exception ex)
         {

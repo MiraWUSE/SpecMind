@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SpecMind.Models;
 using SpecMind.Services;
@@ -8,22 +8,25 @@ namespace SpecMind.ViewModels.Pages;
 
 public partial class SettingsViewModel : ViewModelBase
 {
+    private readonly MainWindowViewModel _main;
+
+    public System.Windows.Input.ICommand ShowDashboardCommand => _main.ShowDashboardCommand;
+
     [ObservableProperty]
     private string selectedSettingsCategory = "themes";
 
     [ObservableProperty]
     private ObservableCollection<AppTheme> availableThemes = new();
 
-    public SettingsViewModel()
+    public SettingsViewModel(MainWindowViewModel main)
     {
+        _main = main;
         LoadThemes();
     }
 
     private void LoadThemes()
     {
-        AvailableThemes =
-            new ObservableCollection<AppTheme>(
-                ThemeService.GetAvailableThemes());
+        AvailableThemes = new ObservableCollection<AppTheme>(ThemeService.GetAvailableThemes());
     }
 
     [RelayCommand]
@@ -35,17 +38,16 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyTheme(AppTheme theme)
     {
-        if (theme == null)
-            return;
-
-        ThemeService.ApplyTheme(theme);
+        if (theme != null)
+        {
+            ThemeService.ApplyTheme(theme);
+        }
     }
 
     [RelayCommand]
     private void ApplyRandomTheme()
     {
         var randomTheme = ThemeService.GenerateRandomTheme();
-
         ThemeService.ApplyTheme(randomTheme);
     }
 }

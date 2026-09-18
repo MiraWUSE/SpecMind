@@ -16,109 +16,84 @@
         FontFamily="Segoe UI">
 
     <Grid Margin="25">
-
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0"
-              Margin="0,0,0,20">
-
+        <!-- Заголовок -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <StackPanel>
-
-                <TextBlock
-                    Text="SpecMind"
-                    FontSize="32"
-                    FontWeight="Bold"
-                    Foreground="{StaticResource SM.TextHeading}"/>
-
-                <TextBlock
-                    Text="Система анализа компьютера и AI-помощник"
-                    FontSize="14"
-                    Foreground="{StaticResource SM.TextPrimary}"/>
-
+                <TextBlock Text="SpecMind"
+                           FontSize="32"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource SM.TextHeading}"/>
+                <TextBlock Text="Система анализа компьютера и AI-помощник"
+                           FontSize="14"
+                           Foreground="{StaticResource SM.TextPrimary}"/>
             </StackPanel>
-
         </Grid>
 
+        <!-- Основная область -->
         <Grid Grid.Row="1">
-
             <Grid.ColumnDefinitions>
-
                 <ColumnDefinition Width="*"/>
-
                 <ColumnDefinition Width="240"/>
-
             </Grid.ColumnDefinitions>
 
+            <!-- Контент (переключаемые страницы) -->
             <Border Grid.Column="0"
                     Background="{StaticResource SM.BackgroundSecondary}"
                     CornerRadius="14"
                     Padding="20">
-
-                <ContentControl
-                    Content="{Binding CurrentPage}"/>
-
+                <ContentControl Content="{Binding CurrentPage}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"/>
             </Border>
 
-
+            <!-- Боковая навигация -->
             <Border Grid.Column="1"
                     Margin="20,0,0,0"
                     Background="{StaticResource SM.BackgroundSecondary}"
                     CornerRadius="14"
                     Padding="18">
-
                 <StackPanel Spacing="12">
+                    <TextBlock Text="Навигация"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource SM.TextHeading}"
+                               Margin="0,0,0,10"/>
 
-                    <TextBlock
-                        Text="Навигация"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource SM.TextHeading}"
-                        Margin="0,0,0,10"/>
+                    <Button Content="🏠 Главная"
+                            Height="45"
+                            Command="{Binding ShowDashboardCommand}"/>
 
-                    <Button
-                        Content="🏠 Главная"
-                        Height="45"
-                        Command="{Binding ShowDashboardCommand}"/>
+                    <Button Content="🖥 Подробно"
+                            Height="45"
+                            Command="{Binding ShowDetailedCommand}"/>
 
-                    <Button
-                        Content="🖥 Подробно"
-                        Height="45"
-                        Command="{Binding ShowDetailedCommand}"/>
+                    <Button Content="📊 Мониторинг"
+                            Height="45"
+                            Command="{Binding ShowMonitoringCommand}"/>
 
-                    <Button
-                        Content="📊 Мониторинг"
-                        Height="45"
-                        Command="{Binding ShowMonitoringCommand}"/>
+                    <Button Content="🤖 AI Помощник"
+                            Height="45"
+                            Command="{Binding ShowAICommand}"/>
 
-                    <Button
-                        Content="🤖 AI Помощник"
-                        Height="45"
-                        Command="{Binding ShowAICommand}"/>
+                    <Button Content="📄 Экспорт"
+                            Height="45"
+                            Command="{Binding ShowExportCommand}"/>
 
-                    <Button
-                        Content="📄 Экспорт"
-                        Height="45"
-                        Command="{Binding ShowExportCommand}"/>
-
-                    <Button
-                        Content="⚙ Настройки"
-                        Height="45"
-                        Command="{Binding ShowSettingsCommand}"/>
-
+                    <Button Content=" Настройки"
+                            Height="45"
+                            Command="{Binding ShowSettingsCommand}"/>
                 </StackPanel>
-
             </Border>
-
         </Grid>
-
     </Grid>
-
 </Window>
