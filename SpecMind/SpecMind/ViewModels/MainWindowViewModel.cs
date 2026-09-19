@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SpecMind.Models;
-using SpecMind.Modules.AI.ViewModels; // <-- ЭТОТ USING ОБЯЗАТЕЛЕН
+using SpecMind.Modules.AI.ViewModels;
 using SpecMind.Services;
 using SpecMind.ViewModels.Pages;
 using System;
@@ -11,93 +11,135 @@ using System.Threading.Tasks;
 
 namespace SpecMind.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
-    private readonly IHardwareScannerService _scanner;
-    private DispatcherTimer? _monitoringTimer;
     private const int MaxDataPoints = 60;
+    private readonly IHardwareScannerService _scanner;
+    private readonly DashboardViewModel _dashboard;
+    private readonly DetailedViewModel _detailed;
+    private readonly MonitoringViewModel _monitoring;
+    private readonly SettingsViewModel _settings;
+    private readonly ExportViewModel _export;
+    private readonly AIViewModel _ai;
+    private DispatcherTimer _monitoringTimer;
+    private Task _refreshTask = Task.CompletedTask;
+    private Task _disposeTask;
+    private bool _disposed;
 
     [ObservableProperty]
     private HardwareInfo hardwareInfo = new();
 
-    [ObservableProperty]
-    private ObservableCollection<double> cpuUsageData = new();
+    public ObservableCollection<double> CpuUsageData { get; } = new();
+    public ObservableCollection<double> GpuUsageData { get; } = new();
+    public ObservableCollection<double> CpuTempData { get; } = new();
+    public ObservableCollection<double> GpuTempData { get; } = new();
 
     [ObservableProperty]
-    private ObservableCollection<double> gpuUsageData = new();
+    private ViewModelBase currentPage;
 
-    [ObservableProperty]
-    private ObservableCollection<double> cpuTempData = new();
+    public MainWindowViewModel() : this(new HardwareScannerService()) { }
 
-    [ObservableProperty]
-    private ObservableCollection<double> gpuTempData = new();
-
-    [ObservableProperty]
-    private ViewModelBase currentPage = null!;
-
-    public MainWindowViewModel()
+    // The owner starts monitoring after composing the application and disposes it on shutdown.
+    public MainWindowViewModel(IHardwareScannerService scanner)
     {
-        _scanner = new HardwareScannerService();
-        CurrentPage = new DashboardViewModel(this);
-        LoadHardwareData();
+        _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
+        _dashboard = new DashboardViewModel(this);
+        _detailed = new DetailedViewModel(this);
+        _monitoring = new MonitoringViewModel(this);
+        _settings = new SettingsViewModel(this);
+        _export = new ExportViewModel(this);
+        _ai = new AIViewModel(this);
+        CurrentPage = _dashboard;
+    }
 
-        _monitoringTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(1)
-        };
-        _monitoringTimer.Tick += async (_, _) => await UpdateMonitoringData();
+    public void StartMonitoring()
+    {
+        if (_disposed || _monitoringTimer != null)
+            return;
+
+        _monitoringTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _monitoringTimer.Tick += OnMonitoringTick;
         _monitoringTimer.Start();
+        _ = RefreshHardwareAsync();
     }
 
-    #region Navigation
+    private async void OnMonitoringTick(object sender, EventArgs e)
+        => await RefreshHardwareAsync();
 
-    [RelayCommand]
-    private void ShowDashboard() => CurrentPage = new DashboardViewModel(this);
-
-    [RelayCommand]
-    private void ShowDetailed() => CurrentPage = new DetailedViewModel(this);
-
-    [RelayCommand]
-    private void ShowMonitoring() => CurrentPage = new MonitoringViewModel(this);
-
-    [RelayCommand]
-    private void ShowSettings() => CurrentPage = new SettingsViewModel(this);
-
-    [RelayCommand]
-    private void ShowExport() => CurrentPage = new ExportViewModel(this);
-
-    [RelayCommand]
-    private void ShowAI() => CurrentPage = new AIViewModel(this); // <-- ТЕПЕРЬ ЭТО РАБОТАЕТ
-
-    #endregion
-
-    private async void LoadHardwareData()
+    // Called on the UI thread; overlapping ticks share the same in-flight scan.
+    public Task RefreshHardwareAsync()
     {
-        HardwareInfo = await _scanner.GetHardwareInfoAsync();
+        if (_disposed)
+            return Task.CompletedTask;
+        if (!_refreshTask.IsCompleted)
+            return _refreshTask;
+
+        return _refreshTask = RefreshHardwareCoreAsync();
     }
 
-    private async Task UpdateMonitoringData()
+    private async Task RefreshHardwareCoreAsync()
     {
         try
         {
             var info = await _scanner.GetHardwareInfoAsync();
+            if (_disposed)
+                return;
+
             HardwareInfo = info;
-
-            CpuUsageData.Add(info.Sensors.CpuUsage);
-            if (CpuUsageData.Count > MaxDataPoints) CpuUsageData.RemoveAt(0);
-
-            GpuUsageData.Add(info.Sensors.GpuUsage);
-            if (GpuUsageData.Count > MaxDataPoints) GpuUsageData.RemoveAt(0);
-
-            CpuTempData.Add(info.Sensors.CpuTemperature);
-            if (CpuTempData.Count > MaxDataPoints) CpuTempData.RemoveAt(0);
-
-            GpuTempData.Add(info.Sensors.GpuTemperature);
-            if (GpuTempData.Count > MaxDataPoints) GpuTempData.RemoveAt(0);
+            AddSample(CpuUsageData, info.Sensors.CpuUsage);
+            AddSample(GpuUsageData, info.Sensors.GpuUsage);
+            AddSample(CpuTempData, info.Sensors.CpuTemperature);
+            AddSample(GpuTempData, info.Sensors.GpuTemperature);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine(ex);
         }
+    }
+
+    private static void AddSample(ObservableCollection<double> data, double value)
+    {
+        data.Add(value);
+        if (data.Count > MaxDataPoints)
+            data.RemoveAt(0);
+    }
+
+    [RelayCommand]
+    private void ShowDashboard() => CurrentPage = _dashboard;
+    [RelayCommand]
+    private void ShowDetailed() => CurrentPage = _detailed;
+    [RelayCommand]
+    private void ShowMonitoring() => CurrentPage = _monitoring;
+    [RelayCommand]
+    private void ShowSettings() => CurrentPage = _settings;
+    [RelayCommand]
+    private void ShowExport() => CurrentPage = _export;
+    [RelayCommand]
+    private void ShowAI() => CurrentPage = _ai;
+
+    public ValueTask DisposeAsync()
+    {
+        _disposeTask ??= DisposeCoreAsync();
+        return new ValueTask(_disposeTask);
+    }
+
+    private async Task DisposeCoreAsync()
+    {
+        _disposed = true;
+        if (_monitoringTimer != null)
+        {
+            _monitoringTimer.Stop();
+            _monitoringTimer.Tick -= OnMonitoringTick;
+        }
+
+        _dashboard.Dispose();
+        _detailed.Dispose();
+        _monitoring.Dispose();
+        _ai.Dispose();
+
+        // Do not close native resources while a worker is still reading sensors.
+        await _refreshTask;
+        if (_scanner is IDisposable disposable)
+            disposable.Dispose();
     }
 }

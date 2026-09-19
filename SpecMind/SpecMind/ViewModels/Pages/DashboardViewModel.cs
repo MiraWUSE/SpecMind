@@ -1,15 +1,6 @@
-﻿using SpecMind.Models;
+﻿namespace SpecMind.ViewModels.Pages;
 
-namespace SpecMind.ViewModels.Pages;
-
-public class DashboardViewModel : ViewModelBase
+public class DashboardViewModel : PagesViewModelBase
 {
-    private readonly MainWindowViewModel _main;
-
-    public DashboardViewModel(MainWindowViewModel main)
-    {
-        _main = main;
-    }
-
-    public HardwareInfo HardwareInfo => _main.HardwareInfo;
+    public DashboardViewModel(MainWindowViewModel main) : base(main) { }
 }

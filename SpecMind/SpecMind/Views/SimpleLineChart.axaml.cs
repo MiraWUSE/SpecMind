@@ -132,6 +132,8 @@ public partial class SimpleLineChart : UserControl
         _chartCanvas.PointerExited += OnPointerExited;
     }
 
+    private bool _isAttached;
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -143,7 +145,7 @@ public partial class SimpleLineChart : UserControl
                 oldCollection.CollectionChanged -= OnDataCollectionChanged;
             }
 
-            if (change.NewValue is ObservableCollection<double> newCollection)
+            if (_isAttached && change.NewValue is ObservableCollection<double> newCollection)
             {
                 newCollection.CollectionChanged += OnDataCollectionChanged;
             }
@@ -353,6 +355,20 @@ public partial class SimpleLineChart : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _isAttached = true;
+        if (Data != null)
+        {
+            Data.CollectionChanged -= OnDataCollectionChanged;
+            Data.CollectionChanged += OnDataCollectionChanged;
+        }
         DrawChart();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _isAttached = false;
+        if (Data != null)
+            Data.CollectionChanged -= OnDataCollectionChanged;
+        base.OnDetachedFromVisualTree(e);
     }
 }

@@ -12,31 +12,35 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
 {
     private Computer _computer;
     private bool _disposed;
+    private readonly object _sync = new();
 
-    public async Task<HardwareInfo> GetHardwareInfoAsync()
+    public Task<HardwareInfo> GetHardwareInfoAsync() => Task.Run(() =>
     {
-        await Task.Delay(100);
-
-        InitializeHardwareMonitor();
-
-        var hardwareInfo = new HardwareInfo
+        lock (_sync)
         {
-            DeviceType = GetDeviceType(),
-            Cpu = GetCpuInfo(),
-            Gpu = GetGpuInfo(),
-            Ram = GetRamInfo(),
-            Storages = GetStorageInfo(),
-            Motherboard = GetMotherboardInfo(),
-            Monitors = GetMonitorInfo(),
-            Sensors = GetSensorData()
-        };
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            InitializeHardwareMonitor();
 
-        return hardwareInfo;
-    }
+            return new HardwareInfo
+            {
+                DeviceType = GetDeviceType(),
+                Cpu = GetCpuInfo(),
+                Gpu = GetGpuInfo(),
+                Ram = GetRamInfo(),
+                Storages = GetStorageInfo(),
+                Motherboard = GetMotherboardInfo(),
+                Monitors = GetMonitorInfo(),
+                Sensors = GetSensorData()
+            };
+        }
+    });
 
     private void InitializeHardwareMonitor()
     {
-        _computer = new Computer
+        if (_computer != null)
+            return;
+
+        var computer = new Computer
         {
             IsCpuEnabled = true,
             IsGpuEnabled = true,
@@ -47,7 +51,16 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             IsStorageEnabled = true
         };
 
-        _computer.Open();
+        try
+        {
+            computer.Open();
+            _computer = computer;
+        }
+        catch
+        {
+            computer.Close();
+            throw;
+        }
     }
 
     private SensorData GetSensorData()
@@ -774,10 +787,13 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
 
     public void Dispose()
     {
-        if (!_disposed)
+        lock (_sync)
         {
-            _computer?.Close();
+            if (_disposed)
+                return;
             _disposed = true;
+            _computer?.Close();
+            _computer = null;
         }
     }
 }
