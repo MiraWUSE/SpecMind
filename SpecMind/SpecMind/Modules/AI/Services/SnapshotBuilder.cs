@@ -1,7 +1,6 @@
-﻿using SpecMind.Models;
+using SpecMind.Models;
 using SpecMind.Modules.AI.Models;
-using System;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace SpecMind.Modules.AI.Services;
 
@@ -9,19 +8,9 @@ public class SnapshotBuilder
 {
     public HardwareSnapshot Build(HardwareInfo hardwareInfo)
     {
-        return new HardwareSnapshot
-        {
-            Hardware = hardwareInfo,
-            CreatedAt = DateTime.Now
-        };
-    }
-
-    public Task<HardwareSnapshot> BuildAsync()
-    {
-        return Task.FromResult(new HardwareSnapshot
-        {
-            Hardware = new HardwareInfo(),
-            CreatedAt = DateTime.Now
-        });
+        ArgumentNullException.ThrowIfNull(hardwareInfo);
+        // Freeze nested fields before background inference; never fabricate hardware.
+        var copy = JsonSerializer.Deserialize<HardwareInfo>(JsonSerializer.Serialize(hardwareInfo));
+        return new HardwareSnapshot { Hardware = copy, CreatedAt = DateTime.Now };
     }
 }

@@ -5,7 +5,7 @@
              x:Class="SpecMind.Views.Pages.AIView"
              x:DataType="vm:AIViewModel">
     <Grid RowDefinitions="Auto,*,Auto,Auto">
-        <TextBlock Text="Локальная модель пока не подключена. Чат работает в демонстрационном режиме."
+        <TextBlock Text="{Binding StatusText}"
                    TextWrapping="Wrap" Margin="0,0,0,12"
                    Foreground="{StaticResource SM.TextPrimary}"/>
         <Border Grid.Row="1" Background="{StaticResource SM.BackgroundSecondary}"
@@ -21,6 +21,8 @@
                                                Foreground="{StaticResource SM.TextHeading}"/>
                                     <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
                                                Foreground="{StaticResource SM.TextPrimary}"/>
+                                    <TextBlock Text="Ожидайте ответа…" IsVisible="{Binding IsThinking}"
+                                               Foreground="{StaticResource SM.TextPrimary}"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -28,14 +30,16 @@
                 </ItemsControl>
             </ScrollViewer>
         </Border>
-        <TextBlock Grid.Row="2" Text="Подготовка демонстрационного ответа…"
+        <TextBlock Grid.Row="2" Text="Генерация выполняется на этом компьютере"
                    IsVisible="{Binding IsBusy}" Margin="0,0,0,8"
                    Foreground="{StaticResource SM.TextPrimary}"/>
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto">
             <TextBox Text="{Binding UserMessage}" Watermark="Введите вопрос…"
                      AcceptsReturn="True" MinHeight="45" IsEnabled="{Binding !IsBusy}"/>
             <Button Grid.Column="1" Margin="10,0,0,0" Content="Отправить"
                     Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}"/>
+            <Button Grid.Column="2" Margin="10,0,0,0" Content="Остановить"
+                    Command="{Binding SendCancelCommand}" IsVisible="{Binding IsBusy}"/>
         </Grid>
     </Grid>
 </UserControl>

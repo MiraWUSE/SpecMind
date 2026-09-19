@@ -1,69 +1,36 @@
-﻿using SpecMind.Modules.AI.Models;
+using SpecMind.Models;
+using SpecMind.Modules.AI.Models;
 using SpecMind.Modules.AI.Providers;
+using System.Threading;
 
 namespace SpecMind.Modules.AI.Services;
 
 public class AIService
 {
     private readonly PromptBuilder _promptBuilder;
-
     private readonly SnapshotBuilder _snapshotBuilder;
-
     private readonly IChatProvider _provider;
 
-    public AIService(
-        PromptBuilder promptBuilder,
-        SnapshotBuilder snapshotBuilder,
-        IChatProvider provider)
+    public AIService(PromptBuilder promptBuilder, SnapshotBuilder snapshotBuilder, IChatProvider provider)
     {
         _promptBuilder = promptBuilder;
         _snapshotBuilder = snapshotBuilder;
         _provider = provider;
     }
 
-    /// <summary>
-    /// Отправить сообщение AI.
-    /// </summary>
-    public async Task<string> SendMessageAsync(
-        IEnumerable<ChatMessage> history,
-        string userMessage)
+    private string BuildPrompt(HardwareInfo hardware, IEnumerable<ChatMessage> history, string question)
     {
-        HardwareSnapshot snapshot =
-            await _snapshotBuilder.BuildAsync();
-
-        string prompt = _promptBuilder.BuildPrompt(
-            snapshot,
-            history,
-            userMessage);
-
-        return await _provider.SendMessageAsync(prompt);
+        ArgumentNullException.ThrowIfNull(hardware);
+        if (string.IsNullOrWhiteSpace(hardware.Cpu.Name) && string.IsNullOrWhiteSpace(hardware.Gpu.Name))
+            throw new InvalidOperationException("Характеристики ПК ещё не получены. Дождитесь сканирования и повторите вопрос.");
+        return _promptBuilder.BuildPrompt(_snapshotBuilder.Build(hardware), history, question);
     }
 
-    /// <summary>
-    /// Потоковая генерация.
-    /// </summary>
-    public IAsyncEnumerable<string> StreamMessageAsync(
-        IEnumerable<ChatMessage> history,
-        string userMessage)
-    {
-        return StreamInternal(history, userMessage);
-    }
+    public Task<string> SendMessageAsync(HardwareInfo hardware, IEnumerable<ChatMessage> history, string userMessage,
+        IProgress<string> progress = null, CancellationToken cancellationToken = default)
+        => _provider.SendMessageAsync(BuildPrompt(hardware, history, userMessage), progress, cancellationToken);
 
-    private async IAsyncEnumerable<string> StreamInternal(
-        IEnumerable<ChatMessage> history,
-        string userMessage)
-    {
-        HardwareSnapshot snapshot =
-            await _snapshotBuilder.BuildAsync();
-
-        string prompt = _promptBuilder.BuildPrompt(
-            snapshot,
-            history,
-            userMessage);
-
-        await foreach (string token in _provider.StreamMessageAsync(prompt))
-        {
-            yield return token;
-        }
-    }
+    public IAsyncEnumerable<string> StreamMessageAsync(HardwareInfo hardware, IEnumerable<ChatMessage> history, string userMessage,
+        IProgress<string> progress = null, CancellationToken cancellationToken = default)
+        => _provider.StreamMessageAsync(BuildPrompt(hardware, history, userMessage), progress, cancellationToken);
 }

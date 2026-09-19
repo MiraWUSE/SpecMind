@@ -1,14 +1,19 @@
-﻿namespace SpecMind.Modules.AI.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-public class ChatMessage
+namespace SpecMind.Modules.AI.Models;
+
+public partial class ChatMessage : ObservableObject
 {
-    public bool IsUser { get; set; }
-
-    public string Message { get; set; } = "";
-
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Sender))]
+    private bool isUser;
+    [ObservableProperty]
+    private string message = "";
+    [ObservableProperty]
+    private bool isThinking;
+    [ObservableProperty]
+    private bool isError;
+    public bool IsSystemMessage { get; set; }
     public DateTime Time { get; set; } = DateTime.Now;
-
-    public bool IsThinking { get; set; }
-
     public string Sender => IsUser ? "Вы" : "SpecMind AI";
 }

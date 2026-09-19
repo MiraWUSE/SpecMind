@@ -1,48 +1,30 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using SpecMind.Modules.AI.Models;
 
 namespace SpecMind.Modules.AI.Runtime;
 
 public class ChatMemory
 {
-    public ObservableCollection<ChatMessage> Messages { get; }
-        = new();
+    public ObservableCollection<ChatMessage> Messages { get; } = new();
 
-    public void AddUser(string text)
+    public ChatMessage AddUser(string text)
     {
-        Messages.Add(new ChatMessage
-        {
-            IsUser = true,
-            Message = text
-        });
+        var message = new ChatMessage { IsUser = true, Message = text };
+        Messages.Add(message);
+        return message;
     }
 
     public ChatMessage AddAssistantThinking()
     {
-        var msg = new ChatMessage
-        {
-            IsUser = false,
-            IsThinking = true,
-            Message = ""
-        };
-
-        Messages.Add(msg);
-
-        return msg;
+        var message = new ChatMessage { IsThinking = true };
+        Messages.Add(message);
+        return message;
     }
 
-    public void AddAssistant(string text)
-    {
-        Messages.Add(new ChatMessage
-        {
-            IsUser = false,
-            Message = text,
-            IsThinking = false
-        });
-    }
+    public void AddAssistant(string text) => Messages.Add(new ChatMessage { Message = text });
+    public void Clear() => Messages.Clear();
 
-    public void Clear()
-    {
-        Messages.Clear();
-    }
+    public ChatMessage[] GetHistory() => Messages
+        .Where(m => !m.IsThinking && !m.IsError && !m.IsSystemMessage && !string.IsNullOrWhiteSpace(m.Message))
+        .Select(m => new ChatMessage { IsUser = m.IsUser, Message = m.Message }).ToArray();
 }

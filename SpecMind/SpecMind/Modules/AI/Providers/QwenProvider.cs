@@ -1,35 +1,24 @@
-﻿using SpecMind.Modules.AI.Runtime;
+using SpecMind.Modules.AI.Runtime;
+using System.Threading;
 
 namespace SpecMind.Modules.AI.Providers;
 
 public class QwenProvider : IChatProvider
 {
     private readonly LLamaRuntime _runtime;
-
     private readonly string _modelPath;
 
-    public QwenProvider(
-        LLamaRuntime runtime,
-        string modelPath)
+    public QwenProvider(LLamaRuntime runtime, string modelPath)
     {
         _runtime = runtime;
         _modelPath = modelPath;
     }
 
-    public async Task<string> SendMessageAsync(string prompt)
-    {
-        if (!_runtime.IsLoaded)
-            await _runtime.LoadAsync(_modelPath);
+    public Task<string> SendMessageAsync(string prompt, IProgress<string> progress = null,
+        CancellationToken cancellationToken = default)
+        => Task.Run(() => _runtime.InferAsync(_modelPath, prompt, progress, cancellationToken), cancellationToken);
 
-        return await _runtime.Executor!.InferAsync(prompt);
-    }
-
-    public async IAsyncEnumerable<string> StreamMessageAsync(string prompt)
-    {
-        if (!_runtime.IsLoaded)
-            await _runtime.LoadAsync(_modelPath);
-
-        await foreach (var token in _runtime.Executor!.InferStreamAsync(prompt))
-            yield return token;
-    }
+    public IAsyncEnumerable<string> StreamMessageAsync(string prompt, IProgress<string> progress = null,
+        CancellationToken cancellationToken = default)
+        => _runtime.InferStreamAsync(_modelPath, prompt, progress, cancellationToken);
 }

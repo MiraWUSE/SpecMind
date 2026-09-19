@@ -12,11 +12,9 @@ public class AIConfigurationService
 
     private readonly AIEnvironment _environment;
 
-    public AIConfigurationService()
+    public AIConfigurationService(AIEnvironment environment = null)
     {
-        _environment = new AIEnvironment();
-
-        _environment.Initialize();
+        _environment = environment ?? new AIEnvironment();
 
         _configPath = _environment.ConfigurationFile;
 

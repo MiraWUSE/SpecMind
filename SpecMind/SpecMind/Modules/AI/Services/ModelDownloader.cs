@@ -11,11 +11,10 @@ public class ModelDownloader
 
     private readonly AIEnvironment _environment;
 
-    public ModelDownloader()
+    public ModelDownloader(AIEnvironment environment = null)
     {
-        _environment = new AIEnvironment();
-
-        _environment.Initialize();
+        _environment = environment ?? new AIEnvironment();
+        ModelsDirectory = _environment.ModelsDirectory;
     }
 
     public AIModel RegisterModel(string filePath)
@@ -29,6 +28,7 @@ public class ModelDownloader
             Path = file.FullName,
             Size = file.Length,
             InstalledAt = DateTime.Now,
+            IsInstalled = file.Exists,
             IsLoaded = false,
             IsActive = false
         };

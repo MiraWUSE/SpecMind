@@ -21,10 +21,10 @@ public class AIConfiguration
     public int MaxHistoryMessages { get; set; } = 30;
 
     /// Максимальное количество токенов ответа.
-    public int MaxTokens { get; set; } = 2048;
+    public int MaxTokens { get; set; } = 512;
 
     /// Размер контекстного окна.
-    public int ContextSize { get; set; } = 8192;
+    public int ContextSize { get; set; } = 4096;
 
     /// Температура генерации.
     public float Temperature { get; set; } = 0.7f;
@@ -33,10 +33,10 @@ public class AIConfiguration
     public float TopP { get; set; } = 0.95f;
 
     /// Использовать ли GPU.
-    public bool UseGpu { get; set; } = true;
+    public bool UseGpu { get; set; } = false;
 
     /// Максимальное количество потоков CPU.
-    public int Threads { get; set; } = Environment.ProcessorCount;
+    public int Threads { get; set; } = Math.Min(8, Environment.ProcessorCount);
 
     /// Автоматически загружать последнюю модель.
     public bool AutoLoadLastModel { get; set; } = true;

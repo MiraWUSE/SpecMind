@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SpecMind.Models;
 using SpecMind.Modules.AI.ViewModels;
+using SpecMind.Modules.AI;
+using SpecMind.Modules.AI.Services;
 using SpecMind.Services;
 using SpecMind.ViewModels.Pages;
 using System;
@@ -21,6 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly SettingsViewModel _settings;
     private readonly ExportViewModel _export;
     private readonly AIViewModel _ai;
+    private readonly AIModule _aiModule;
     private DispatcherTimer _monitoringTimer;
     private Task _refreshTask = Task.CompletedTask;
     private Task _disposeTask;
@@ -40,7 +43,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     public MainWindowViewModel() : this(new HardwareScannerService()) { }
 
     // The owner starts monitoring after composing the application and disposes it on shutdown.
-    public MainWindowViewModel(IHardwareScannerService scanner)
+    public MainWindowViewModel(IHardwareScannerService scanner, AIService aiService = null)
     {
         _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
         _dashboard = new DashboardViewModel(this);
@@ -48,7 +51,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _monitoring = new MonitoringViewModel(this);
         _settings = new SettingsViewModel(this);
         _export = new ExportViewModel(this);
-        _ai = new AIViewModel(this);
+        if (aiService == null)
+            _aiModule = new AIModule();
+        _ai = new AIViewModel(aiService ?? _aiModule.AIService, () => HardwareInfo);
         CurrentPage = _dashboard;
     }
 
@@ -135,7 +140,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _dashboard.Dispose();
         _detailed.Dispose();
         _monitoring.Dispose();
-        _ai.Dispose();
+        await _ai.DisposeAsync();
+        if (_aiModule != null)
+            await _aiModule.DisposeAsync();
 
         // Do not close native resources while a worker is still reading sensors.
         await _refreshTask;

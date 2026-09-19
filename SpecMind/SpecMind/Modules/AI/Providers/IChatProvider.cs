@@ -1,10 +1,9 @@
-﻿namespace SpecMind.Modules.AI.Providers;
+using System.Threading;
+
+namespace SpecMind.Modules.AI.Providers;
 
 public interface IChatProvider
 {
-    /// Отправить сообщение модели
-    Task<string> SendMessageAsync(string prompt);
-
-    /// Потоковая генерация ответа
-    IAsyncEnumerable<string> StreamMessageAsync(string prompt);
+    Task<string> SendMessageAsync(string prompt, IProgress<string> progress = null, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<string> StreamMessageAsync(string prompt, IProgress<string> progress = null, CancellationToken cancellationToken = default);
 }
