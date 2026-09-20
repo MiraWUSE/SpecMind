@@ -71,49 +71,25 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
 
         foreach (var hardware in _computer.Hardware)
         {
-            hardware.Update();
+            UpdateHardware(hardware);
 
             // CPU сенсоры
             if (hardware.HardwareType == HardwareType.Cpu)
             {
-                List<float> temperatures = new List<float>();
-
-                foreach (var sensor in hardware.Sensors)
-                {
-                    if (sensor.SensorType == SensorType.Temperature)
-                    {
-                        var value = sensor.Value ?? 0;
-
-                        // Собираем все валидные температуры CPU
-                        if (value > 0 && value < 150)
-                        {
-                            temperatures.Add(value);
-
-                            // Ищем Package или Core температуры
-                            var name = sensor.Name.ToLower();
-                            if (name.Contains("package") || name.Contains("cpu package") || name.Contains("tctl"))
-                            {
-                                sensors.CpuTemperature = value;
-                            }
-                        }
-                    }
-
+                var readings = EnumerateSensors(hardware).ToArray();
+                var temperature = TemperatureReading.SelectCpu(readings
+                    .Where(s => s.SensorType == SensorType.Temperature)
+                    .Select(s => (s.Name, (double?)s.Value)));
+                if (temperature.HasValue)
+                    sensors.CpuTemperature = sensors.CpuTemperature.HasValue
+                        ? Math.Max(sensors.CpuTemperature.Value, temperature.Value) : temperature;
+                foreach (var sensor in readings)
                     if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("CPU Total"))
                         sensors.CpuUsage = sensor.Value ?? 0;
-                }
-
-                // Если не нашли Package, берем среднюю или максимальную температуру
-                if (sensors.CpuTemperature == 0 && temperatures.Count > 0)
-                {
-                    sensors.CpuTemperature = temperatures.Count > 1
-                        ? temperatures[temperatures.Count - 2] // Предпоследняя (обычно Package)
-                        : temperatures[temperatures.Count - 1]; // Последняя
-                }
 
                 // Вентиляторы CPU
                 foreach (var subHardware in hardware.SubHardware)
                 {
-                    subHardware.Update();
                     foreach (var sensor in subHardware.Sensors)
                     {
                         if (sensor.SensorType == SensorType.Fan && sensor.Name.ToLower().Contains("cpu"))
@@ -125,10 +101,10 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             // GPU сенсоры
             if (hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd)
             {
-                foreach (var sensor in hardware.Sensors)
+                foreach (var sensor in EnumerateSensors(hardware))
                 {
                     if (sensor.SensorType == SensorType.Temperature && sensor.Name.Contains("GPU Core"))
-                        sensors.GpuTemperature = sensor.Value ?? 0;
+                        sensors.GpuTemperature = TemperatureReading.IsValid(sensor.Value) ? sensor.Value : null;
 
                     if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("GPU Core"))
                         sensors.GpuUsage = sensor.Value ?? 0;
@@ -141,11 +117,11 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
             // Материнская плата
             if (hardware.HardwareType == HardwareType.Motherboard)
             {
-                foreach (var sensor in hardware.Sensors)
+                foreach (var sensor in EnumerateSensors(hardware))
                 {
                     if (sensor.SensorType == SensorType.Temperature &&
                         (sensor.Name.Contains("Motherboard") || sensor.Name.Contains("System")))
-                        sensors.MotherboardTemperature = sensor.Value ?? 0;
+                        sensors.MotherboardTemperature = TemperatureReading.IsValid(sensor.Value) ? sensor.Value : null;
 
                     if (sensor.SensorType == SensorType.Fan)
                     {
@@ -160,6 +136,19 @@ public class HardwareScannerService : IHardwareScannerService, IDisposable
         }
 
         return sensors;
+    }
+
+    private static void UpdateHardware(IHardware hardware)
+    {
+        hardware.Update();
+        foreach (var child in hardware.SubHardware) UpdateHardware(child);
+    }
+
+    private static IEnumerable<ISensor> EnumerateSensors(IHardware hardware)
+    {
+        foreach (var sensor in hardware.Sensors) yield return sensor;
+        foreach (var child in hardware.SubHardware)
+            foreach (var sensor in EnumerateSensors(child)) yield return sensor;
     }
 
     private string GetDeviceType()

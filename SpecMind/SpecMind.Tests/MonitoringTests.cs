@@ -10,6 +10,22 @@ namespace SpecMind.Tests;
 public class MonitoringTests
 {
     [Fact]
+    public async Task TemperatureHistoryPreservesMissingSamplesAndRecovery()
+    {
+        var snapshot = Snapshot(20);
+        snapshot.Sensors.CpuTemperature = null;
+        await using var main = new MainWindowViewModel(new FakeScanner(() => Task.FromResult(snapshot)));
+        await main.RefreshHardwareAsync();
+        snapshot = Snapshot(45);
+        await main.RefreshHardwareAsync();
+        snapshot.Sensors.CpuTemperature = null;
+        await main.RefreshHardwareAsync();
+        Assert.Equal(new double?[] { null, 45, null }, main.CpuTempData);
+        Assert.Equal(3, main.GpuTempData.Count);
+        Assert.Null(main.HardwareInfo.Sensors.CpuTemperature);
+    }
+
+    [Fact]
     public async Task OpenPagesAreNotifiedWhenHardwareIsReplaced()
     {
         var snapshot = Snapshot(24);
@@ -54,8 +70,13 @@ public class MonitoringTests
         Assert.Same(main.GpuUsageData, monitoring.GpuUsageData);
         Assert.Same(main.CpuTempData, monitoring.CpuTempData);
         Assert.Same(main.GpuTempData, monitoring.GpuTempData);
-        foreach (var data in new[] { monitoring.CpuUsageData, monitoring.GpuUsageData,
-                     monitoring.CpuTempData, monitoring.GpuTempData })
+        foreach (var data in new[] { monitoring.CpuTempData, monitoring.GpuTempData })
+        {
+            Assert.Equal(60, data.Count);
+            Assert.Equal(6d, data[0]);
+            Assert.Equal(65d, data[^1]);
+        }
+        foreach (var data in new[] { monitoring.CpuUsageData, monitoring.GpuUsageData })
         {
             Assert.Equal(60, data.Count);
             Assert.Equal(6d, data[0]);

@@ -8,8 +8,8 @@ namespace SpecMind.Views;
 
 public class CircularGauge : Control
 {
-    public static readonly StyledProperty<double> ValueProperty =
-        AvaloniaProperty.Register<CircularGauge, double>(nameof(Value), 0);
+    public static readonly StyledProperty<double?> ValueProperty =
+        AvaloniaProperty.Register<CircularGauge, double?>(nameof(Value), null);
 
     public static readonly StyledProperty<double> MaxValueProperty =
         AvaloniaProperty.Register<CircularGauge, double>(nameof(MaxValue), 100);
@@ -23,7 +23,7 @@ public class CircularGauge : Control
     public static readonly StyledProperty<string> UnitProperty =
         AvaloniaProperty.Register<CircularGauge, string>(nameof(Unit), "%");
 
-    public double Value
+    public double? Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
@@ -83,7 +83,8 @@ public class CircularGauge : Control
         context.DrawGeometry(null, new Pen(new SolidColorBrush(bgColor, 0.3), 10), backgroundEllipse);
 
         // Прогресс (дуга)
-        var percentage = Math.Clamp(Value / MaxValue, 0, 1);
+        var hasValue = Value.HasValue && double.IsFinite(Value.Value);
+        var percentage = hasValue && MaxValue > 0 ? Math.Clamp(Value.Value / MaxValue, 0, 1) : 0;
         var sweepAngle = percentage * 360;
 
         if (sweepAngle > 0.1)
@@ -131,7 +132,7 @@ public class CircularGauge : Control
         }
 
         // Текст в центре
-        var text = $"{Value:F0}{Unit}";
+        var text = hasValue ? $"{Value:F0}{Unit}" : "—";
         var formattedText = new FormattedText(
             text,
             System.Globalization.CultureInfo.CurrentCulture,

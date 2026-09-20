@@ -89,9 +89,9 @@ public class FanInfo
 
 public class SensorData
 {
-    public double CpuTemperature { get; set; }
-    public double GpuTemperature { get; set; }
-    public double MotherboardTemperature { get; set; }
+    public double? CpuTemperature { get; set; }
+    public double? GpuTemperature { get; set; }
+    public double? MotherboardTemperature { get; set; }
     public double CpuUsage { get; set; }
     public double GpuUsage { get; set; }
     public int CpuFanSpeed { get; set; }

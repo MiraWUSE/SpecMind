@@ -12,6 +12,8 @@ public class StatusConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
+        if (parameter is "cpu_temp" or "gpu_temp" && !SpecMind.Services.TemperatureReading.IsValid(value as double?))
+            return "Нет данных";
         if (value is double temp && parameter is string type)
         {
             if (type == "cpu_temp")
@@ -48,6 +50,8 @@ public class StatusColorConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
+        if (parameter is "cpu_temp" or "gpu_temp" && !SpecMind.Services.TemperatureReading.IsValid(value as double?))
+            return new SolidColorBrush(Color.FromRgb(160, 160, 180));
         if (value is double temp && parameter is string type)
         {
             if (type == "cpu_temp")

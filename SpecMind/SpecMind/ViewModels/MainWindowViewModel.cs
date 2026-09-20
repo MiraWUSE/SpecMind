@@ -34,8 +34,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     public ObservableCollection<double> CpuUsageData { get; } = new();
     public ObservableCollection<double> GpuUsageData { get; } = new();
-    public ObservableCollection<double> CpuTempData { get; } = new();
-    public ObservableCollection<double> GpuTempData { get; } = new();
+    public ObservableCollection<double?> CpuTempData { get; } = new();
+    public ObservableCollection<double?> GpuTempData { get; } = new();
 
     [ObservableProperty]
     private ViewModelBase currentPage;
@@ -102,7 +102,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
-    private static void AddSample(ObservableCollection<double> data, double value)
+    private static void AddSample<T>(ObservableCollection<T> data, T value)
     {
         data.Add(value);
         if (data.Count > MaxDataPoints)

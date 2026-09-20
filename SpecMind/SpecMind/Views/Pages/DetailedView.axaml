@@ -94,7 +94,7 @@
                                 
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <TextBlock Grid.Column="0" Text="🌡️ Температура:" FontSize="12" Foreground="{StaticResource SM.TextPrimary}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding HardwareInfo.Sensors.CpuTemperature, StringFormat='{}{0:F0}°C'}" 
+                                    <TextBlock Grid.Column="1" Text="{Binding HardwareInfo.Sensors.CpuTemperature, Converter={x:Static vm:TemperatureConverter.Instance}}"
                                                FontSize="12" FontWeight="Bold" Foreground="{StaticResource SM.TextHeading}"/>
                                     <TextBlock Grid.Column="2" 
                                                Text="{Binding HardwareInfo.Sensors.CpuTemperature, Converter={x:Static vm:StatusConverter.Instance}, ConverterParameter=cpu_temp}"
@@ -183,7 +183,7 @@
                                 
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <TextBlock Grid.Column="0" Text="🌡️ Температура:" FontSize="12" Foreground="{StaticResource SM.TextPrimary}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding HardwareInfo.Sensors.GpuTemperature, StringFormat='{}{0:F0}°C'}" 
+                                    <TextBlock Grid.Column="1" Text="{Binding HardwareInfo.Sensors.GpuTemperature, Converter={x:Static vm:TemperatureConverter.Instance}}"
                                                FontSize="12" FontWeight="Bold" Foreground="{StaticResource SM.TextHeading}"/>
                                     <TextBlock Grid.Column="2" 
                                                Text="{Binding HardwareInfo.Sensors.GpuTemperature, Converter={x:Static vm:StatusConverter.Instance}, ConverterParameter=gpu_temp}"

@@ -36,7 +36,7 @@ public class ReportExporterService
         sb.AppendLine($"  Архитектура:     {info.Cpu.Architecture}");
         sb.AppendLine($"  Сокет:           {info.Cpu.Socket}");
         sb.AppendLine($"  Кэш L1/L2/L3:    {info.Cpu.CacheL1} / {info.Cpu.CacheL2} / {info.Cpu.CacheL3}");
-        sb.AppendLine($"  Температура:     {info.Sensors.CpuTemperature:F1}°C");
+        sb.AppendLine($"  Температура:     {TemperatureReading.Format(info.Sensors.CpuTemperature)}");
         sb.AppendLine($"  Загрузка:        {info.Sensors.CpuUsage:F1}%");
         sb.AppendLine();
 
@@ -53,7 +53,7 @@ public class ReportExporterService
         sb.AppendLine($"  Device ID:       {info.Gpu.DeviceId}");
         sb.AppendLine($"  Драйвер:         {info.Gpu.DriverVersion}");
         sb.AppendLine($"  Дата драйвера:   {info.Gpu.DriverDate}");
-        sb.AppendLine($"  Температура:     {info.Sensors.GpuTemperature:F1}°C");
+        sb.AppendLine($"  Температура:     {TemperatureReading.Format(info.Sensors.GpuTemperature)}");
         sb.AppendLine($"  Загрузка:        {info.Sensors.GpuUsage:F1}%");
         sb.AppendLine($"  Вентилятор:      {info.Sensors.GpuFanSpeed} RPM");
         sb.AppendLine();
@@ -186,7 +186,7 @@ public class ReportExporterService
         sb.AppendLine($"CPU;Кэш L1;{info.Cpu.CacheL1}");
         sb.AppendLine($"CPU;Кэш L2;{info.Cpu.CacheL2}");
         sb.AppendLine($"CPU;Кэш L3;{info.Cpu.CacheL3}");
-        sb.AppendLine($"CPU;Температура;{info.Sensors.CpuTemperature:F1}°C");
+        sb.AppendLine($"CPU;Температура;{TemperatureReading.Format(info.Sensors.CpuTemperature)}");
         sb.AppendLine($"CPU;Загрузка;{info.Sensors.CpuUsage:F1}%");
 
         // GPU
@@ -199,7 +199,7 @@ public class ReportExporterService
         sb.AppendLine($"GPU;Device ID;{info.Gpu.DeviceId}");
         sb.AppendLine($"GPU;Драйвер;{info.Gpu.DriverVersion}");
         sb.AppendLine($"GPU;Дата драйвера;{info.Gpu.DriverDate}");
-        sb.AppendLine($"GPU;Температура;{info.Sensors.GpuTemperature:F1}°C");
+        sb.AppendLine($"GPU;Температура;{TemperatureReading.Format(info.Sensors.GpuTemperature)}");
         sb.AppendLine($"GPU;Загрузка;{info.Sensors.GpuUsage:F1}%");
         sb.AppendLine($"GPU;Вентилятор;{info.Sensors.GpuFanSpeed} RPM");
 
@@ -277,7 +277,7 @@ public class ReportExporterService
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Частоты</span><span class=\"value\">{info.Cpu.BaseClock} / {info.Cpu.MaxClock}</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Архитектура / Сокет</span><span class=\"value\">{info.Cpu.Architecture} / {info.Cpu.Socket}</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Кэш L1/L2/L3</span><span class=\"value\">{info.Cpu.CacheL1} / {info.Cpu.CacheL2} / {info.Cpu.CacheL3}</span></div>");
-        sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Температура</span><span class=\"value\">{info.Sensors.CpuTemperature:F1}°C</span></div>");
+        sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Температура</span><span class=\"value\">{TemperatureReading.Format(info.Sensors.CpuTemperature)}</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Загрузка</span><span class=\"value\">{info.Sensors.CpuUsage:F1}%</span></div>");
         sb.AppendLine("  </div>");
 
@@ -291,7 +291,7 @@ public class ReportExporterService
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">TDP</span><span class=\"value\">{info.Gpu.Tdp}</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">PCIe версия</span><span class=\"value\">{info.Gpu.PcieVersion}</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Драйвер</span><span class=\"value\">{info.Gpu.DriverVersion} ({info.Gpu.DriverDate})</span></div>");
-        sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Температура</span><span class=\"value\">{info.Sensors.GpuTemperature:F1}°C</span></div>");
+        sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Температура</span><span class=\"value\">{TemperatureReading.Format(info.Sensors.GpuTemperature)}</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Загрузка</span><span class=\"value\">{info.Sensors.GpuUsage:F1}%</span></div>");
         sb.AppendLine($"    <div class=\"row\"><span class=\"label\">Вентилятор</span><span class=\"value\">{info.Sensors.GpuFanSpeed} RPM</span></div>");
         sb.AppendLine("  </div>");

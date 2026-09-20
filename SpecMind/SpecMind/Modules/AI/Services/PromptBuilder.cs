@@ -41,7 +41,7 @@ public class PromptBuilder
     }
 
     private static string Number(double value) => value.ToString("0.0", CultureInfo.InvariantCulture);
-    private static string Temperature(double value) => value > 0 ? Number(value) + " °C" : "недоступна";
+    private static string Temperature(double? value) => SpecMind.Services.TemperatureReading.IsValid(value) ? Number(value.Value) + " °C" : "недоступна";
     private static void AppendTurn(StringBuilder builder, string role, string content)
     {
         // Keep literal model control tokens in user/hardware text from creating extra turns.
