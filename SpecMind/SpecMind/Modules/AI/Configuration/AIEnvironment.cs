@@ -19,9 +19,9 @@ public class AIEnvironment
 
     public string ConfigurationFile { get; }
 
-    public AIEnvironment()
+    public AIEnvironment(string rootDirectory = null)
     {
-        RootDirectory = AppContext.BaseDirectory;
+        RootDirectory = Path.GetFullPath(rootDirectory ?? AppContext.BaseDirectory);
 
         ModelsDirectory = Path.Combine(RootDirectory, "Models");
 

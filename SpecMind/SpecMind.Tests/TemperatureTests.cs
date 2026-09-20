@@ -67,7 +67,7 @@ public class TemperatureTests
                 await export(hardware, path);
                 var report = await File.ReadAllTextAsync(path);
                 Assert.Contains("Нет данных", report);
-                Assert.Contains(TemperatureReading.Format(42), report);
+                Assert.Contains(TemperatureReading.Format(42), System.Net.WebUtility.HtmlDecode(report));
             }
             await ReportExporterService.ExportToJsonAsync(hardware, path);
             using var json = JsonDocument.Parse(await File.ReadAllTextAsync(path));

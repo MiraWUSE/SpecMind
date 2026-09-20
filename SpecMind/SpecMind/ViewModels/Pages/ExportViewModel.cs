@@ -16,9 +16,14 @@ public partial class ExportViewModel : ViewModelBase
 
     public System.Windows.Input.ICommand ShowDashboardCommand => _main.ShowDashboardCommand;
 
-    public ExportViewModel(MainWindowViewModel main)
+    private readonly Func<string, string, Task<string>> _selectPath;
+    [ObservableProperty]
+    private string statusText = "";
+
+    public ExportViewModel(MainWindowViewModel main, Func<string, string, Task<string>> selectPath = null)
     {
         _main = main;
+        _selectPath = selectPath ?? SelectPathAsync;
     }
 
     [RelayCommand]
@@ -62,46 +67,55 @@ public partial class ExportViewModel : ViewModelBase
         string description,
         Func<HardwareInfo, string, Task<string>> exporter)
     {
+        StatusText = "";
         try
         {
-            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
-                return;
-
-            var window = desktop.MainWindow;
-
-            if (window == null)
-                return;
-
-            var file = await window.StorageProvider.SaveFilePickerAsync(
-                new FilePickerSaveOptions
-                {
-                    Title = "Сохранить отчет",
-
-                    SuggestedFileName =
-                        $"SpecMind_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}",
-
-                    DefaultExtension = extension,
-
-                    FileTypeChoices =
-                    [
-                        new FilePickerFileType(description)
-                        {
-                            Patterns =
-                            [
-                                $"*.{extension}"
-                            ]
-                        }
-                    ]
-                });
-
-            if (file == null)
-                return;
-
-            await exporter(_main.HardwareInfo, file.Path.LocalPath);
+            var path = await _selectPath(extension, description);
+            if (path == null) return;
+            await exporter(_main.HardwareInfo, path);
+            StatusText = "Отчёт сохранён: " + path;
         }
         catch (Exception ex)
         {
+            StatusText = "Не удалось сохранить отчёт: " + ex.Message;
             System.Diagnostics.Debug.WriteLine(ex);
         }
+    }
+    private static async Task<string> SelectPathAsync(string extension, string description)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return null;
+
+        var window = desktop.MainWindow;
+
+        if (window == null)
+            return null;
+
+        var file = await window.StorageProvider.SaveFilePickerAsync(
+            new FilePickerSaveOptions
+            {
+                Title = "Сохранить отчет",
+
+                SuggestedFileName =
+                    $"SpecMind_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}",
+
+                DefaultExtension = extension,
+
+                FileTypeChoices =
+                [
+                    new FilePickerFileType(description)
+                    {
+                        Patterns =
+                        [
+                            $"*.{extension}"
+                        ]
+                    }
+                ]
+            });
+
+        if (file == null)
+            return null;
+
+        return file.Path.LocalPath;
     }
 }

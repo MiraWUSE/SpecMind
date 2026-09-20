@@ -44,6 +44,8 @@
             </StackPanel>
         </Border>
 
+<TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Foreground="{StaticResource SM.TextPrimary}"/>
+
 <!-- Форматы (все одинакового размера) -->
 <Grid ColumnDefinitions="*,*" RowDefinitions="*,*" Margin="0,0,0,20">
     
