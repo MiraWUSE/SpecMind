@@ -1,0 +1,115 @@
+name: Build, test and package
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  SPECMIND_RUN_MODEL_TESTS: '0'
+  SPECMIND_RUN_HARDWARE_TESTS: '0'
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+      - name: Restore
+        run: dotnet restore SpecMind/SpecMind.sln -p:IncludeLocalModels=false
+      - name: Build Release
+        run: dotnet build SpecMind/SpecMind.sln -c Release --no-restore -p:IncludeLocalModels=false
+      - name: Run unit, integration and headless UI tests
+        run: >-
+          dotnet test SpecMind/SpecMind.Tests/SpecMind.Tests.csproj
+          -c Release --no-build --no-restore
+          --collect:"XPlat Code Coverage" --settings coverage.runsettings
+          --logger "trx;LogFileName=tests.trx" --results-directory TestResults/ci
+      - name: Check coverage floor
+        run: ./scripts/check-coverage.ps1 -ResultsDirectory TestResults/ci
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.sha }}
+          path: TestResults/ci
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+      - name: Publish Windows x64 with bundled .NET runtime
+        run: >-
+          dotnet publish SpecMind/SpecMind/SpecMind.csproj -c Release -r win-x64
+          --self-contained true -p:IncludeLocalModels=false -o artifacts/win-x64
+      - name: Verify package and create ZIP
+        run: |
+          if (!(Test-Path artifacts/win-x64/SpecMind.exe)) { throw 'Application executable is missing.' }
+          if (!(Get-ChildItem artifacts/win-x64 -Recurse -Filter 'llama.dll')) { throw 'Native AI runtime is missing.' }
+          if (Get-ChildItem artifacts/win-x64 -Recurse -Filter '*.gguf') { throw 'Local model must not be bundled.' }
+          Compress-Archive -Path artifacts/win-x64/* -DestinationPath artifacts/SpecMind-win-x64.zip
+          $hash = (Get-FileHash artifacts/SpecMind-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  SpecMind-win-x64.zip" | Set-Content artifacts/SpecMind-win-x64.zip.sha256 -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpecMind-win-x64-${{ github.sha }}
+          path: |
+            artifacts/SpecMind-win-x64.zip
+            artifacts/SpecMind-win-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: SpecMind-win-x64-${{ github.sha }}
+          path: release
+      - name: Create draft release for a version tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$') { throw 'Expected a version tag such as v1.0.0.' }
+          gh release view $env:RELEASE_TAG --json isDraft > $null 2>&1
+          if ($LASTEXITCODE -eq 0) { throw 'Release already exists; refusing to overwrite it.' }
+          gh release create $env:RELEASE_TAG release/SpecMind-win-x64.zip release/SpecMind-win-x64.zip.sha256 --verify-tag --draft --title "SpecMind $env:RELEASE_TAG" --notes "Windows x64, .NET runtime included. Place qwen2.5-3b-instruct-q4_k_m.gguf in Models next to SpecMind.exe to enable local AI."
+          if ($LASTEXITCODE -ne 0) { throw 'Release creation failed.' }

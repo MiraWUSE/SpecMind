@@ -30,7 +30,7 @@
     <PackageReference Include="System.Management" Version="10.0.9" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Models\*.gguf">
+    <None Include="Models\*.gguf" Condition="'$(IncludeLocalModels)' != 'false'">
 	<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</None>
   </ItemGroup>
