@@ -5,7 +5,10 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $reports = @(Get-ChildItem -LiteralPath $ResultsDirectory -Recurse -Filter coverage.cobertura.xml)
-if ($reports.Count -ne 1) { throw "Expected one coverage report, found $($reports.Count). Use a fresh results directory." }
+# VSTest's TRX logger may copy the collector attachment into an additional In/ directory.
+# Deduplicate identical bytes only; never silently choose between different test runs.
+$reports = @($reports | Group-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash } | ForEach-Object { $_.Group[0] })
+if ($reports.Count -ne 1) { throw "Expected one distinct coverage report, found $($reports.Count). Use a fresh results directory." }
 [xml]$report = Get-Content -LiteralPath $reports[0].FullName -Raw
 $culture = [Globalization.CultureInfo]::InvariantCulture
 if ([int]$report.coverage.'lines-valid' -le 0) { throw 'Coverage report contains no instrumented lines.' }
